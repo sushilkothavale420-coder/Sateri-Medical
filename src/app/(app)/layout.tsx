@@ -59,19 +59,29 @@ export default function AppLayout({
   }, [user, isLoading, isAdmin, router]);
 
 
-  return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset>
-        <Header notifications={expiringNotifications || []} />
-        {isLoading ? (
-          <div className="flex flex-1 items-center justify-center p-4 md:p-8">
-            <div>Loading...</div>
-          </div>
-        ) : (
-          children
-        )}
-      </SidebarInset>
-    </SidebarProvider>
-  );
+  // This blocking loading state is critical to prevent race conditions.
+  if (isLoading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  // Only render the full layout if loading is complete and the user is a confirmed admin.
+  // The useEffect above handles redirection, so this prevents a flash of un-styled content.
+  if (isAdmin && user) {
+    return (
+      <SidebarProvider>
+        <AppSidebar />
+        <SidebarInset>
+          <Header notifications={expiringNotifications || []} />
+          {children}
+        </SidebarInset>
+      </SidebarProvider>
+    );
+  }
+
+  // While redirecting, render nothing.
+  return null;
 }

@@ -46,7 +46,7 @@ export default function LoginPage() {
   }, [searchParams, toast, router, auth]);
 
   useEffect(() => {
-    // If the user is successfully verified as an admin, redirect them.
+    // If the user is already an admin and lands on this page, redirect them.
     if (!isAdminLoading && isAdmin) {
       router.push('/dashboard');
     }
@@ -57,8 +57,9 @@ export default function LoginPage() {
     if (!auth) return;
     try {
       await initiateEmailSignIn(auth, loginEmail, loginPassword);
-      // On success, the onAuthStateChanged listener in FirebaseProvider will trigger,
-      // and the useEffect hook above will handle the redirect once isAdmin is confirmed.
+      // On success, redirect to the dashboard.
+      // The AppLayout will show a loading state and then verify permissions.
+      router.push('/dashboard');
     } catch (error) {
       let title = 'Login Failed';
       let description = 'An unexpected error occurred. Please try again.';
@@ -90,17 +91,8 @@ export default function LoginPage() {
 
   const isLoading = isUserLoading || isAdminLoading;
   
-  if (isLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div>Loading...</div>
-      </div>
-    );
-  }
-  
-  // If we have finished loading and the user is an admin, we are about to redirect.
-  // Show a loading indicator to prevent flashing the login form.
-  if (!isAdminLoading && isAdmin) {
+  // Prevents the login form from flashing if we are already logged in and about to redirect.
+  if (isLoading || (!isAdminLoading && isAdmin)) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div>Loading...</div>
