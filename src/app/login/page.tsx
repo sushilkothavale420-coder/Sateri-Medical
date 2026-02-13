@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/firebase';
 import { initiateEmailSignIn } from '@/firebase/non-blocking-login';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useUser } from '@/firebase';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
@@ -24,13 +24,26 @@ export default function LoginPage() {
   const [loginPassword, setLoginPassword] = useState('');
   const auth = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, isUserLoading } = useUser();
   const { isAdmin, isLoading: isAdminLoading } = useAdmin();
   const { toast } = useToast();
 
   useEffect(() => {
-    // This effect is for redirecting an already logged-in admin
-    // who lands on the login page.
+    const error = searchParams.get('error');
+    if (error === 'access-denied') {
+      toast({
+        variant: 'destructive',
+        title: 'Access Denied',
+        description: 'You do not have permission to access the admin dashboard.',
+      });
+      // A clean URL is better for the user.
+      router.replace('/login', { scroll: false });
+    }
+  }, [searchParams, toast, router]);
+
+  useEffect(() => {
+    // This effect handles an already-logged-in admin landing on this page.
     if (!isAdminLoading && isAdmin) {
       router.push('/dashboard');
     }
@@ -41,6 +54,7 @@ export default function LoginPage() {
     if (!auth) return;
     try {
       await initiateEmailSignIn(auth, loginEmail, loginPassword);
+      // On success, go to dashboard. The AppLayout will verify admin role.
       router.push('/dashboard');
     } catch (error) {
       let title = 'Login Failed';
@@ -73,6 +87,8 @@ export default function LoginPage() {
 
   const isLoading = isUserLoading || isAdminLoading;
   
+  // While loading, or if we know the user is an admin and is being redirected,
+  // show a loading indicator to prevent flashing the login form.
   if (isLoading || (!isUserLoading && isAdmin)) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -80,7 +96,9 @@ export default function LoginPage() {
       </div>
     );
   }
-
+  
+  // If we're not loading AND the user is not an admin, we can safely show the login form.
+  // This handles both logged-out users and non-admin users who were signed out by the layout.
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-background">
        <div className="absolute top-8 left-8">

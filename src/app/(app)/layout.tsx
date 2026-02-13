@@ -2,7 +2,7 @@
 
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/app-sidebar';
-import { useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useUser, useCollection, useFirestore, useMemoFirebase, useAuth } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo } from 'react';
 import { Header } from '@/components/header';
@@ -19,6 +19,7 @@ export default function AppLayout({
   const { isAdmin, isLoading: isAdminLoading } = useAdmin();
   const router = useRouter();
   const firestore = useFirestore();
+  const auth = useAuth();
 
   const batchesQuery = useMemoFirebase(
     () => (firestore ? collection(firestore, 'batches') : null),
@@ -39,28 +40,31 @@ export default function AppLayout({
     }).sort((a,b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime());
   }, [batches]);
 
-  useEffect(() => {
-    const totalLoading = isUserLoading || isAdminLoading;
-    if (!totalLoading) {
-      if (!user) {
-        // Not logged in, go to login page
-        router.push('/login');
-      } else if (!isAdmin) {
-        // Logged in, but not an admin.
-        // Redirect to login page, which will show an "Access Denied" message.
-        // This prevents a redirect loop by not signing the user out.
-        router.push('/login');
-      }
-    }
-  }, [user, isUserLoading, isAdmin, isAdminLoading, router]);
-
   const isLoading = isUserLoading || isAdminLoading;
+
+  useEffect(() => {
+    if (isLoading) {
+      return; // Wait until all auth/role checks are complete
+    }
+
+    if (!user) {
+      // No user found, redirect to login.
+      router.push('/login');
+    } else if (!isAdmin) {
+      // User is logged in but is not an admin.
+      // Sign them out and redirect to login with an error message.
+      auth.signOut();
+      router.push('/login?error=access-denied');
+    }
+    // If user is present and is an admin, render the children.
+  }, [user, isLoading, isAdmin, router, auth]);
+
 
   return (
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <Header notifications={expiringNotifications} />
+        <Header notifications={expiringNotifications || []} />
         {isLoading ? (
           <div className="flex flex-1 items-center justify-center p-4 md:p-8">
             <div>Loading...</div>
