@@ -78,14 +78,14 @@ export function EditMedicineDialog({
 
     toast({
       title: 'Medicine Updated',
-      description: `${values.name} has been updated.`,
+      description: `${values.name}'s details have been updated.`,
     });
     onOpenChange(false);
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent className="sm:max-w-[480px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Medicine</DialogTitle>
           <DialogDescription>
