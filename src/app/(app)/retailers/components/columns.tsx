@@ -54,7 +54,10 @@ export const columns: ColumnDef<UserProfile>[] = [
     accessorKey: 'createdAt',
     header: 'Date Added',
     cell: ({ row }) => {
-      const date = new Date(row.getValue('createdAt'))
+      const createdAt = row.getValue('createdAt');
+      if (!createdAt) return null;
+      // Handle both Firestore Timestamp and ISO string
+      const date = (createdAt as any).toDate ? (createdAt as any).toDate() : new Date(createdAt as string);
       return <div>{format(date, "MMMM d, yyyy")}</div>
     }
   },

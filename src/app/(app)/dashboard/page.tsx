@@ -28,6 +28,7 @@ import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collectionGroup, query, orderBy, limit, collection } from "firebase/firestore";
 import { Sale, SaleItem, Customer } from "@/lib/types";
 import { useEffect, useMemo, useState } from "react";
+import { format } from "date-fns";
 
 export default function DashboardPage() {
   const firestore = useFirestore();
@@ -65,7 +66,7 @@ export default function DashboardPage() {
 
   const { totalRevenue, totalProfit } = useMemo(() => {
     if (!saleItems) {
-      return { totalRevenue: 0, totalProfit: 0, totalSales: 0 };
+      return { totalRevenue: 0, totalProfit: 0 };
     }
     const revenue = saleItems.reduce((acc, item) => acc + item.itemTotalWithTax, 0);
     const profit = saleItems.reduce((acc, item) => {
@@ -78,6 +79,40 @@ export default function DashboardPage() {
     };
   }, [saleItems]);
   
+  const salesChartData = useMemo(() => {
+    if (!saleItems) return [];
+
+    const monthlySales: Record<string, { total: number }> = {};
+
+    saleItems.forEach(item => {
+        const createdAt = item.createdAt;
+        if (!createdAt) return;
+
+        // Handle both Firestore Timestamp and ISO string
+        const date = (createdAt as any).toDate ? (createdAt as any).toDate() : new Date(createdAt as string);
+        const monthKey = format(date, 'yyyy-MM');
+        
+        if (!monthlySales[monthKey]) {
+            monthlySales[monthKey] = { total: 0 };
+        }
+        monthlySales[monthKey].total += item.itemTotalWithTax;
+    });
+
+    const data = [];
+    const today = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      const monthKey = format(d, 'yyyy-MM');
+      const monthName = format(d, 'MMM');
+      data.push({
+        month: monthName,
+        total: monthlySales[monthKey]?.total || 0,
+      });
+    }
+    return data;
+
+}, [saleItems]);
+
   const formatCurrency = (amount: number) => new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency: 'INR',
@@ -151,11 +186,11 @@ export default function DashboardPage() {
                 <CardHeader>
                   <CardTitle className="font-headline">Sales Overview</CardTitle>
                   <CardDescription>
-                    Monthly performance of top-selling medicines.
+                    Your sales performance for the last 6 months.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="pl-2">
-                  <SalesChart />
+                  <SalesChart data={salesChartData} />
                 </CardContent>
               </Card>
               <Card>

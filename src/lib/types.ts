@@ -15,8 +15,8 @@ export const medicineSchema = z.object({
 
 export type Medicine = z.infer<typeof medicineSchema> & { 
   id: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: any;
+  updatedAt: any;
 };
 
 export const stockEntrySchema = z.object({
@@ -41,8 +41,8 @@ export type UserProfile = {
   id: string;
   email: string;
   role: 'Admin' | 'Retailer';
-  createdAt: string;
-  updatedAt: string;
+  createdAt: any;
+  updatedAt: any;
 };
 
 export const customerSchema = z.object({
@@ -55,8 +55,8 @@ export const customerSchema = z.object({
 export type Customer = z.infer<typeof customerSchema> & {
   id: string;
   debtAmount: number;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: any;
+  updatedAt: any;
 };
 
 export const saleSchema = z.object({
@@ -74,8 +74,8 @@ export const saleSchema = z.object({
 
 export type Sale = z.infer<typeof saleSchema> & {
   id: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: any;
+  updatedAt: any;
 };
 
 export const saleItemSchema = z.object({
@@ -93,5 +93,5 @@ export const saleItemSchema = z.object({
 
 export type SaleItem = z.infer<typeof saleItemSchema> & {
   id: string;
-  createdAt: string;
+  createdAt: any;
 };

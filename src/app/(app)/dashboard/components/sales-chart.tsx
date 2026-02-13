@@ -1,23 +1,46 @@
 'use client';
 
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from 'recharts';
-import { ChartContainer } from '@/components/ui/chart';
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
+import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 
-export function SalesChart() {
+const chartConfig = {
+  total: {
+    label: 'Sales',
+    color: 'hsl(var(--chart-1))',
+  },
+};
+
+type SalesChartProps = {
+  data: { month: string; total: number }[];
+};
+
+export function SalesChart({ data }: SalesChartProps) {
   return (
-    <ChartContainer config={{}} className="min-h-[200px] w-full">
+    <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
       <ResponsiveContainer width="100%" height={350}>
-        <BarChart data={[]} aria-label="Sales chart">
+        <BarChart data={data} aria-label="Sales chart">
           <XAxis
             dataKey="month"
             tickLine={false}
             tickMargin={10}
             axisLine={false}
-            tickFormatter={(value) => value.slice(0, 3)}
           />
-          <YAxis />
-          <Bar dataKey="desktop" fill="var(--color-desktop)" radius={4} />
-          <Bar dataKey="mobile" fill="var(--color-mobile)" radius={4} />
+          <YAxis 
+            tickFormatter={(value) => {
+                if (typeof value === 'number') {
+                    return `₹${value / 1000}k`;
+                }
+                return value;
+            }}
+          />
+          <Tooltip 
+            cursor={false}
+            content={<ChartTooltipContent 
+                formatter={(value) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(value as number)}
+                indicator='dot' 
+            />}
+          />
+          <Bar dataKey="total" fill="var(--color-total)" radius={4} />
         </BarChart>
       </ResponsiveContainer>
     </ChartContainer>
