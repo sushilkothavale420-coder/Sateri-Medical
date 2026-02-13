@@ -15,6 +15,8 @@ import { initiateEmailSignIn } from '@/firebase/non-blocking-login';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/firebase';
 import Link from 'next/link';
+import { useToast } from '@/hooks/use-toast';
+import { FirebaseError } from 'firebase/app';
 
 export default function LoginPage() {
   const [loginEmail, setLoginEmail] = useState('');
@@ -22,6 +24,7 @@ export default function LoginPage() {
   const auth = useAuth();
   const router = useRouter();
   const { user, isUserLoading } = useUser();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!isUserLoading && user) {
@@ -32,10 +35,40 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!auth) return;
-    initiateEmailSignIn(auth, loginEmail, loginPassword);
+    try {
+      await initiateEmailSignIn(auth, loginEmail, loginPassword);
+      // On successful login, the onAuthStateChanged listener in the
+      // layout will handle the redirect to the dashboard.
+    } catch (error) {
+      let title = 'Login Failed';
+      let description = 'An unexpected error occurred. Please try again.';
+
+      if (error instanceof FirebaseError) {
+        switch (error.code) {
+          case 'auth/invalid-credential':
+          case 'auth/user-not-found': // Deprecated but good fallback
+          case 'auth/wrong-password': // Deprecated but good fallback
+            description =
+              'Invalid email or password. Please check your credentials.';
+            break;
+          case 'auth/invalid-email':
+            description = 'The email address is not valid.';
+            break;
+          default:
+            // Keep the generic message for other Firebase errors
+            break;
+        }
+      }
+
+      toast({
+        variant: 'destructive',
+        title: title,
+        description: description,
+      });
+    }
   };
 
-  if (isUserLoading || user) {
+  if (isUserLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div>Loading...</div>
