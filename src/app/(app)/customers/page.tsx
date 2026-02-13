@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import { collection } from 'firebase/firestore';
-import { useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { Customer } from '@/lib/types';
 import { CustomersDataTable } from './components/customers-data-table';
 import { Columns } from './components/columns';
@@ -11,17 +11,18 @@ import { AddCustomerDialog } from './components/add-customer-dialog';
 import { useState } from 'react';
 import { DeleteCustomerDialog } from './components/delete-customer-dialog';
 import { EditCustomerDialog } from './components/edit-customer-dialog';
+import { useAdmin } from '@/hooks/use-admin';
 
 export default function CustomersPage() {
   const firestore = useFirestore();
-  const { user } = useUser();
+  const { isAdmin, isLoading: isAdminLoading } = useAdmin();
   const [isAddDialogOpen, setAddDialogOpen] = useState(false);
   
   const customersQuery = useMemoFirebase(
     () => (firestore ? collection(firestore, 'customers') : null),
     [firestore]
   );
-  const { data: customers, isLoading } = useCollection<Customer>(customersQuery);
+  const { data: customers, isLoading: areCustomersLoading } = useCollection<Customer>(customersQuery);
 
   const { 
     columns, 
@@ -32,7 +33,7 @@ export default function CustomersPage() {
     selectedCustomer
   } = Columns();
 
-  const isAdmin = user?.uid === 'a6jWnMQZfLY82mBA3g0DIMxYRFZ2';
+  const isLoading = areCustomersLoading || isAdminLoading;
 
   return (
     <div className="flex min-h-screen w-full flex-col">

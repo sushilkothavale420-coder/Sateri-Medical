@@ -17,7 +17,10 @@
         },
         "role": {
           "type": "string",
-          "description": "The role of the user (e.g., 'Admin'), determining access permissions."
+          "description": "The role of the user, which is always 'Admin' in this system.",
+          "enum": [
+            "Admin"
+          ]
         },
         "createdAt": {
           "type": "string",

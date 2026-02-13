@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Medicine, stockEntrySchema } from '@/lib/types';
 import { collection } from 'firebase/firestore';
@@ -19,13 +19,14 @@ import { Calendar } from '@/components/ui/calendar';
 import { useToast } from '@/hooks/use-toast';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandList } from '@/components/ui/command';
 import { z } from 'zod';
+import { useAdmin } from '@/hooks/use-admin';
 
 type StockEntryFormValues = z.infer<typeof stockEntrySchema>;
 
 
 export default function StockManagementPage() {
   const firestore = useFirestore();
-  const { user } = useUser();
+  const { isAdmin, isLoading: isAdminLoading } = useAdmin();
   const { toast } = useToast();
   const [open, setOpen] = useState(false)
   const [selectedMedicine, setSelectedMedicine] = useState<Medicine | null>(null);
@@ -49,7 +50,7 @@ export default function StockManagementPage() {
   });
 
   const onSubmit = (values: StockEntryFormValues) => {
-    if (!firestore || !user) return;
+    if (!firestore) return;
 
     if (!selectedMedicine) {
         toast({ variant: 'destructive', title: 'Error', description: 'Please select a medicine.' });
@@ -84,8 +85,17 @@ export default function StockManagementPage() {
     form.reset();
     setSelectedMedicine(null);
   };
-
-  const isAdmin = user?.uid === 'a6jWnMQZfLY82mBA3g0DIMxYRFZ2';
+  
+  if (isAdminLoading) {
+    return (
+      <div className="flex min-h-screen w-full flex-col">
+        <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+            <h1 className="text-lg font-semibold md:text-2xl">Stock Management</h1>
+            <p>Loading...</p>
+        </main>
+      </div>
+    )
+  }
 
   if (!isAdmin) {
     return (
