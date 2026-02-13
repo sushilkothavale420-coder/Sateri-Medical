@@ -90,29 +90,35 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
 
   // Effect for user profile
   useEffect(() => {
-    // If we're done loading the user and there is a user
-    if (!userAuthState.isUserLoading && userAuthState.user && firestore) {
+    if (userAuthState.user && firestore) {
+      // User is authenticated, start fetching their profile.
+      // Reset profile state and set loading to true before the fetch.
+      setUserAuthState(s => ({ ...s, userProfile: null, isProfileLoading: true }));
+
       const userProfileRef = doc(firestore, 'users', userAuthState.user.uid);
-      const unsubscribe = onSnapshot(userProfileRef, 
+      const unsubscribe = onSnapshot(userProfileRef,
         (snapshot) => {
           if (snapshot.exists()) {
             const profileData = { id: snapshot.id, ...snapshot.data() } as UserProfile;
             setUserAuthState(s => ({ ...s, userProfile: profileData, isProfileLoading: false }));
           } else {
+            // User document doesn't exist, they have no specific role.
             setUserAuthState(s => ({ ...s, userProfile: null, isProfileLoading: false }));
           }
         },
         (error) => {
           console.error("FirebaseProvider: user profile snapshot error:", error);
-          setUserAuthState(s => ({ ...s, userProfile: null, isProfileLoading: false })); // Consider adding a profileError state
+          // End loading even if there's an error fetching the profile.
+          setUserAuthState(s => ({ ...s, userProfile: null, isProfileLoading: false }));
         }
       );
       return () => unsubscribe();
-    } else if (!userAuthState.user) {
-      // No user, so no profile to fetch.
+    } else {
+      // No user is authenticated, so there is no profile to fetch.
       setUserAuthState(s => ({ ...s, userProfile: null, isProfileLoading: false }));
     }
-  }, [userAuthState.user, userAuthState.isUserLoading, firestore]);
+  }, [userAuthState.user, firestore]);
+
 
   // Memoize the context value
   const contextValue = useMemo((): FirebaseContextState => {
