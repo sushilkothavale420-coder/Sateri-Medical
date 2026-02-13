@@ -220,8 +220,8 @@ service cloud.firestore {
       /**
        * @description Items within a sale.
        */
-      match /items/{saleItemId} {
-        allow get, list: if isSignedIn();
+      match /sale_items/{saleItemId} {
+        allow read: if isSignedIn();
 
         function canAccessParentSale() {
           let parentSale = get(/databases/$(database)/documents/sales/$(saleId)).data;
@@ -262,3 +262,5 @@ service cloud.firestore {
     }
   }
 }
+
+    

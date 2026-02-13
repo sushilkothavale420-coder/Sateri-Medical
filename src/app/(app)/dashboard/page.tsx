@@ -34,7 +34,7 @@ export default function DashboardPage() {
   const [customerNames, setCustomerNames] = useState<Record<string, string>>({});
 
   const saleItemsQuery = useMemoFirebase(
-    () => (firestore ? query(collectionGroup(firestore, 'items')) : null),
+    () => (firestore ? query(collectionGroup(firestore, 'sale_items')) : null),
     [firestore]
   );
   const { data: saleItems } = useCollection<SaleItem>(saleItemsQuery);
@@ -194,3 +194,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
