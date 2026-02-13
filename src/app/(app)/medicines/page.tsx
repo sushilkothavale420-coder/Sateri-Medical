@@ -5,12 +5,10 @@ import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import { collection } from 'firebase/firestore';
 import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
-import { Medicine, UserProfile } from '@/lib/types';
+import { Medicine } from '@/lib/types';
 import { MedicinesDataTable } from './components/medicines-data-table';
 import { Columns } from './components/columns';
 import { AddMedicineDialog } from './components/add-medicine-dialog';
-import { useDoc } from '@/firebase/firestore/use-doc';
-import { doc } from 'firebase/firestore';
 import { useState } from 'react';
 import { DeleteMedicineDialog } from './components/delete-medicine-dialog';
 import { EditMedicineDialog } from './components/edit-medicine-dialog';
@@ -29,15 +27,6 @@ export default function MedicinesPage() {
     selectedMedicine 
   } = Columns();
 
-  const userProfileRef = useMemoFirebase(() => {
-    if (firestore && user) {
-      return doc(firestore, 'users', user.uid);
-    }
-    return null;
-  }, [firestore, user]);
-
-  const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
-
   const medicinesQuery = useMemoFirebase(
     () => (firestore ? collection(firestore, 'medicines') : null),
     [firestore]
@@ -45,7 +34,7 @@ export default function MedicinesPage() {
   
   const { data: medicines, isLoading } = useCollection<Medicine>(medicinesQuery);
 
-  const isAdmin = userProfile?.role === 'Admin';
+  const isAdmin = user?.uid === 'a6jWnMQZfLY82mBA3g0DIMxYRFZ2';
 
   return (
     <div className="flex min-h-screen w-full flex-col">

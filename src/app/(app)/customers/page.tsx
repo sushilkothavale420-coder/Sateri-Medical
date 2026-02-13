@@ -5,12 +5,10 @@ import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import { collection } from 'firebase/firestore';
 import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
-import { Customer, UserProfile } from '@/lib/types';
+import { Customer } from '@/lib/types';
 import { CustomersDataTable } from './components/customers-data-table';
 import { Columns } from './components/columns';
 import { AddCustomerDialog } from './components/add-customer-dialog';
-import { useDoc } from '@/firebase/firestore/use-doc';
-import { doc } from 'firebase/firestore';
 import { useState } from 'react';
 import { DeleteCustomerDialog } from './components/delete-customer-dialog';
 import { EditCustomerDialog } from './components/edit-customer-dialog';
@@ -29,15 +27,6 @@ export default function CustomersPage() {
     selectedCustomer
   } = Columns();
 
-  const userProfileRef = useMemoFirebase(() => {
-    if (firestore && user) {
-      return doc(firestore, 'users', user.uid);
-    }
-    return null;
-  }, [firestore, user]);
-
-  const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
-
   const customersQuery = useMemoFirebase(
     () => (firestore ? collection(firestore, 'customers') : null),
     [firestore]
@@ -45,7 +34,7 @@ export default function CustomersPage() {
   
   const { data: customers, isLoading } = useCollection<Customer>(customersQuery);
 
-  const isAdmin = userProfile?.role === 'Admin';
+  const isAdmin = user?.uid === 'a6jWnMQZfLY82mBA3g0DIMxYRFZ2';
 
   return (
     <div className="flex min-h-screen w-full flex-col">

@@ -9,23 +9,12 @@ import { UserProfile } from '@/lib/types';
 import { RetailersDataTable } from './components/retailers-data-table';
 import { columns } from './components/columns';
 import { AddRetailerDialog } from './components/add-retailer-dialog';
-import { useDoc } from '@/firebase/firestore/use-doc';
-import { doc } from 'firebase/firestore';
 import { useState } from 'react';
 
 export default function RetailersPage() {
   const firestore = useFirestore();
   const { user } = useUser();
   const [isAddDialogOpen, setAddDialogOpen] = useState(false);
-
-  const userProfileRef = useMemoFirebase(() => {
-    if (firestore && user) {
-      return doc(firestore, 'users', user.uid);
-    }
-    return null;
-  }, [firestore, user]);
-
-  const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
 
   const retailersQuery = useMemoFirebase(
     () => (firestore ? query(collection(firestore, 'users'), where('role', '==', 'Retailer')) : null),
@@ -34,7 +23,7 @@ export default function RetailersPage() {
   
   const { data: retailers, isLoading } = useCollection<UserProfile>(retailersQuery);
 
-  const isAdmin = userProfile?.role === 'Admin';
+  const isAdmin = user?.uid === 'a6jWnMQZfLY82mBA3g0DIMxYRFZ2';
 
   return (
     <div className="flex min-h-screen w-full flex-col">
