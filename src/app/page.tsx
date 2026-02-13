@@ -20,7 +20,6 @@ import { useRouter } from 'next/navigation';
 import { useUser } from '@/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
-import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 
 export default function AuthPage() {
@@ -46,20 +45,20 @@ export default function AuthPage() {
       const userCredential = await initiateEmailSignUp(auth, registerEmail, registerPassword);
       
       // After successful registration in auth, create user doc in firestore
-      if (auth.currentUser) {
-        const userRef = doc(firestore, 'users', auth.currentUser.uid);
+      if (userCredential?.user) {
+        const userRef = doc(firestore, 'users', userCredential.user.uid);
         const newUser = {
           email: registerEmail,
           role: 'Retailer', // Default role for new sign-ups
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
-        setDocumentNonBlocking(userRef, newUser, { merge: true });
+        await setDoc(userRef, newUser);
       }
 
     } catch (error) {
       console.error('Registration Error:', error);
-      // Handle registration errors (e.g., email already in use)
+      // TODO: Show a toast notification for registration error.
     }
   };
 
