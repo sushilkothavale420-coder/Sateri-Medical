@@ -55,20 +55,18 @@ export default function AppLayout({
 
   const isLoading = isUserLoading || isAdminLoading;
 
-  if (isLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div>Loading...</div>
-      </div>
-    );
-  }
-
   return (
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
         <Header notifications={expiringNotifications} />
-        {children}
+        {isLoading ? (
+          <div className="flex flex-1 items-center justify-center p-4 md:p-8">
+            <div>Loading...</div>
+          </div>
+        ) : (
+          children
+        )}
       </SidebarInset>
     </SidebarProvider>
   );

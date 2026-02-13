@@ -24,7 +24,7 @@ export default function LoginPage() {
   const [loginPassword, setLoginPassword] = useState('');
   const auth = useAuth();
   const router = useRouter();
-  const { user, isUserLoading } = useUser();
+  const { isUserLoading } = useUser();
   const { isAdmin, isLoading: isAdminLoading } = useAdmin();
   const { toast } = useToast();
 
@@ -41,7 +41,7 @@ export default function LoginPage() {
     try {
       await initiateEmailSignIn(auth, loginEmail, loginPassword);
       // On successful login, the useEffect above will handle the redirect if the user is an admin.
-      // The AppLayout will handle redirection if they are not.
+      // The AppLayout will handle redirection for non-admins.
     } catch (error) {
       let title = 'Login Failed';
       let description = 'An unexpected error occurred. Please try again.';
@@ -77,27 +77,6 @@ export default function LoginPage() {
       <div className="flex h-screen items-center justify-center">
         <div>Loading...</div>
       </div>
-    );
-  }
-
-  // If a user is logged in but not an admin, show an access denied message.
-  if (user && !isAdmin && !isAdminLoading) {
-    return (
-      <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-background">
-        <div className="w-full max-w-md text-center">
-          <Card>
-            <CardHeader>
-              <CardTitle>Access Denied</CardTitle>
-              <CardDescription>
-                You do not have permission to access the admin dashboard.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button onClick={() => auth.signOut()}>Logout</Button>
-            </CardContent>
-          </Card>
-        </div>
-      </main>
     );
   }
 
