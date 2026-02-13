@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { useFirestore, useUser } from '@/firebase';
-import { collection, getDocs, doc, writeBatch, serverTimestamp } from 'firebase/firestore';
+import { useState, useMemo } from 'react';
+import { useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, doc, writeBatch, serverTimestamp } from 'firebase/firestore';
 import { Medicine, Customer } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -31,8 +31,12 @@ export function PosTerminal() {
   const { user } = useUser();
   const { toast } = useToast();
 
-  const [medicines, setMedicines] = useState<Medicine[]>([]);
-  const [customers, setCustomers] = useState<Customer[]>([]);
+  const medicinesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'medicines') : null, [firestore]);
+  const { data: medicines, isLoading: isLoadingMedicines } = useCollection<Medicine>(medicinesQuery);
+
+  const customersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'customers') : null, [firestore]);
+  const { data: customers, isLoading: isLoadingCustomers } = useCollection<Customer>(customersQuery);
+
   const [cart, setCart] = useState<CartItem[]>([]);
   
   const [selectedMedicine, setSelectedMedicine] = useState<Medicine | null>(null);
@@ -46,21 +50,6 @@ export function PosTerminal() {
   const [medicinePopoverOpen, setMedicinePopoverOpen] = useState(false);
   const [customerPopoverOpen, setCustomerPopoverOpen] = useState(false);
   const [isAddCustomerOpen, setAddCustomerOpen] = useState(false);
-
-
-  useEffect(() => {
-    if (!firestore) return;
-
-    const fetchData = async () => {
-      const medSnapshot = await getDocs(collection(firestore, 'medicines'));
-      setMedicines(medSnapshot.docs.map(d => ({ ...d.data(), id: d.id })) as Medicine[]);
-
-      const custSnapshot = await getDocs(collection(firestore, 'customers'));
-      setCustomers(custSnapshot.docs.map(d => ({ ...d.data(), id: d.id })) as Customer[]);
-    };
-
-    fetchData();
-  }, [firestore]);
 
   const handleAddToBill = () => {
     if (!selectedMedicine) {
@@ -208,6 +197,7 @@ export function PosTerminal() {
                           variant="outline"
                           role="combobox"
                           className={cn("w-full justify-between", !selectedMedicine && "text-muted-foreground")}
+                          disabled={isLoadingMedicines}
                         >
                           {selectedMedicine ? selectedMedicine.name : "Select medicine"}
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -217,9 +207,9 @@ export function PosTerminal() {
                       <Command>
                         <CommandInput placeholder="Search medicine..." />
                         <CommandList>
-                          <CommandEmpty>No medicine found.</CommandEmpty>
+                          <CommandEmpty>{isLoadingMedicines ? 'Loading medicines...' : 'No medicine found.'}</CommandEmpty>
                           <CommandGroup>
-                            {medicines.map((med) => (
+                            {medicines && medicines.map((med) => (
                               <CommandItem
                                 value={med.name}
                                 key={med.id}
@@ -320,6 +310,7 @@ export function PosTerminal() {
                         variant="outline"
                         role="combobox"
                         className={cn("w-full justify-between", !selectedCustomer && "text-muted-foreground")}
+                         disabled={isLoadingCustomers}
                       >
                         {selectedCustomer ? selectedCustomer.name : "Select customer (optional)"}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -329,9 +320,9 @@ export function PosTerminal() {
                     <Command>
                       <CommandInput placeholder="Search customer..." />
                       <CommandList>
-                        <CommandEmpty>No customer found.</CommandEmpty>
+                        <CommandEmpty>{isLoadingCustomers ? 'Loading customers...' : 'No customer found.'}</CommandEmpty>
                         <CommandGroup>
-                          {customers.map((cust) => (
+                          {customers && customers.map((cust) => (
                             <CommandItem
                               value={cust.name}
                               key={cust.id}

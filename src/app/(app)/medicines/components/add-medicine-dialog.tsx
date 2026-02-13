@@ -43,7 +43,7 @@ export function AddMedicineDialog({ children, isOpen, onOpenChange }: AddMedicin
     resolver: zodResolver(medicineSchema),
     defaultValues: {
       name: '',
-      composition: '',
+      compositionId: '',
       category: '',
       company: '',
       basePurchasePrice: undefined,
@@ -101,7 +101,7 @@ export function AddMedicineDialog({ children, isOpen, onOpenChange }: AddMedicin
             />
             <FormField
               control={form.control}
-              name="composition"
+              name="compositionId"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Composition (Generic Name)</FormLabel>

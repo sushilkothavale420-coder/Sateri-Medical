@@ -51,7 +51,7 @@ export const Columns = () => {
       header: 'Name',
     },
     {
-      accessorKey: 'composition',
+      accessorKey: 'compositionId',
       header: 'Composition',
     },
     {

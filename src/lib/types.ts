@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const medicineSchema = z.object({
   name: z.string().min(1, "Name is required."),
-  composition: z.string().min(1, "Composition is required."),
+  compositionId: z.string().min(1, "Composition is required."),
   category: z.string().min(1, "Category is required."),
   company: z.string().min(1, "Company is required."),
   basePurchasePrice: z.coerce.number().min(0, "Purchase price must be a non-negative number."),

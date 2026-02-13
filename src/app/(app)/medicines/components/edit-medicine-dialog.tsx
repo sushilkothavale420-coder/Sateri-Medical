@@ -103,7 +103,7 @@ export function EditMedicineDialog({
             />
             <FormField
               control={form.control}
-              name="composition"
+              name="compositionId"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Composition (Generic Name)</FormLabel>
