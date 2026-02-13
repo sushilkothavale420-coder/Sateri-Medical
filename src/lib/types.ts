@@ -114,3 +114,19 @@ export type PublicMedicineRequest = z.infer<typeof publicMedicineRequestSchema> 
   status: 'Pending' | 'Contacted' | 'Fulfilled';
   createdAt: any;
 };
+
+export const customerAccountTransactionSchema = z.object({
+  customerId: z.string(),
+  transactionDate: z.string(),
+  type: z.string(),
+  amount: z.number(),
+  paymentMethod: z.string().optional(),
+  description: z.string().optional(),
+  relatedSaleId: z.string().optional().nullable(),
+  createdByUserId: z.string(),
+});
+
+export type CustomerAccountTransaction = z.infer<typeof customerAccountTransactionSchema> & {
+  id: string;
+  createdAt: any;
+};

@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useState } from 'react';
+import Link from 'next/link';
 
 export const Columns = () => {
   const [isEditOpen, setEditOpen] = useState(false);
@@ -43,6 +44,14 @@ export const Columns = () => {
     {
       accessorKey: 'name',
       header: 'Name',
+      cell: ({ row }) => {
+        const customer = row.original;
+        return (
+          <Link href={`/customers/${customer.id}`} className="font-medium text-primary hover:underline">
+            {customer.name}
+          </Link>
+        )
+      }
     },
     {
       accessorKey: 'email',
