@@ -4,7 +4,7 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "User",
       "type": "object",
-      "description": "Represents a user of the system with role-based access control (Admin or Retailer).",
+      "description": "Represents a user of the system with role-based access control (Admin).",
       "properties": {
         "id": {
           "type": "string",
@@ -17,7 +17,7 @@
         },
         "role": {
           "type": "string",
-          "description": "The role of the user (e.g., 'Admin', 'Retailer'), determining access permissions."
+          "description": "The role of the user (e.g., 'Admin'), determining access permissions."
         },
         "createdAt": {
           "type": "string",
@@ -536,7 +536,7 @@
         },
         "createdByUserId": {
           "type": "string",
-          "description": "Reference to User (Retailer) who processed this sale. (Relationship: User 1:N Sale)"
+          "description": "Reference to User (Admin) who processed this sale. (Relationship: User 1:N Sale)"
         },
         "createdAt": {
           "type": "string",
@@ -802,79 +802,55 @@
         "createdAt"
       ]
     },
-    "Request": {
+    "PublicMedicineRequest": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Request",
+      "title": "PublicMedicineRequest",
       "type": "object",
-      "description": "Facilitates communication and requests between Admin and Retailers regarding items or supplies.",
+      "description": "Represents a medicine request submitted by a public, non-authenticated user from the website.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the Request entity."
+          "description": "Unique identifier for the PublicMedicineRequest entity."
         },
-        "requesterUserId": {
+        "name": {
           "type": "string",
-          "description": "Reference to User who initiated this request. (Relationship: User 1:N Request)"
+          "description": "The name of the person requesting the medicine."
         },
-        "responderUserId": {
+        "contactNumber": {
           "type": "string",
-          "description": "Reference to User who is the intended recipient/responder of this request. (Relationship: User 1:N Request)"
+          "description": "Contact phone number for the requester."
         },
-        "requestType": {
+        "place": {
           "type": "string",
-          "description": "The type of request (e.g., 'Demand Item', 'Supply Item', 'General Query')."
+          "description": "The city, town, or village of the requester."
         },
-        "medicineId": {
+        "medicineName": {
           "type": "string",
-          "description": "Optional reference to Medicine if the request pertains to a specific item. (Relationship: Medicine 1:N Request)"
-        },
-        "requestedQuantity": {
-          "type": "number",
-          "description": "The quantity of medicine requested, if applicable, in its smallest units."
-        },
-        "message": {
-          "type": "string",
-          "description": "A detailed message describing the request."
+          "description": "The name of the requested medicine and any other details."
         },
         "status": {
           "type": "string",
-          "description": "The current status of the request (e.g., 'Pending', 'Approved', 'Rejected', 'Completed')."
-        },
-        "requestDate": {
-          "type": "string",
-          "description": "The date and time when the request was initiated.",
-          "format": "date-time"
-        },
-        "responseDate": {
-          "type": "string",
-          "description": "Optional date and time when the request was responded to.",
-          "format": "date-time"
-        },
-        "responseMessage": {
-          "type": "string",
-          "description": "Optional message provided by the responder to the request."
+          "description": "The current status of the request.",
+          "enum": [
+            "Pending",
+            "Contacted",
+            "Fulfilled"
+          ]
         },
         "createdAt": {
           "type": "string",
-          "description": "Timestamp when the request record was created.",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "description": "Timestamp when the request record was last updated.",
+          "description": "Timestamp when the request was created.",
           "format": "date-time"
         }
       },
       "required": [
         "id",
-        "requesterUserId",
-        "responderUserId",
-        "requestType",
-        "message",
+        "name",
+        "contactNumber",
+        "place",
+        "medicineName",
         "status",
-        "requestDate",
-        "createdAt",
-        "updatedAt"
+        "createdAt"
       ]
     }
   },
@@ -892,7 +868,7 @@
           "schema": {
             "$ref": "#/backend/entities/User"
           },
-          "description": "User profiles with role (Admin/Retailer). Used for authenticating users and determining their permissions via the 'role' field.",
+          "description": "User profiles with role (Admin). Used for authenticating users and determining their permissions via the 'role' field.",
           "params": [
             {
               "name": "userId",
@@ -924,7 +900,7 @@
           "schema": {
             "$ref": "#/backend/entities/Medicine"
           },
-          "description": "Details of specific medicine products. Includes denormalized 'compositionId' for generic search. Only Admin can manage and Retailers can read.",
+          "description": "Details of specific medicine products. Includes denormalized 'compositionId' for generic search. Only Admin can manage.",
           "params": [
             {
               "name": "medicineId",
@@ -940,7 +916,7 @@
           "schema": {
             "$ref": "#/backend/entities/Batch"
           },
-          "description": "Individual medicine batches, tracking expiry dates and quantities. Includes denormalized 'medicineId' for efficient lookup. Only Admin can manage and Retailers can read.",
+          "description": "Individual medicine batches, tracking expiry dates and quantities. Includes denormalized 'medicineId' for efficient lookup. Only Admin can manage.",
           "params": [
             {
               "name": "batchId",
@@ -956,7 +932,7 @@
           "schema": {
             "$ref": "#/backend/entities/Supplier"
           },
-          "description": "Information about medicine suppliers/vendors. Only Admin can manage and Retailers can read.",
+          "description": "Information about medicine suppliers/vendors. Only Admin can manage.",
           "params": [
             {
               "name": "supplierId",
@@ -1008,7 +984,7 @@
           "schema": {
             "$ref": "#/backend/entities/Customer"
           },
-          "description": "Customer accounts. Admin creates/manages these. Retailers can read and create transactions for them.",
+          "description": "Customer accounts. Admin creates and manages these.",
           "params": [
             {
               "name": "customerId",
@@ -1024,7 +1000,7 @@
           "schema": {
             "$ref": "#/backend/entities/CustomerAccountTransaction"
           },
-          "description": "Financial transactions related to a customer's account. Includes 'customerId' and 'createdByUserId' (Retailer/Admin UID) for authorization. Allows both Admin and Retailers to create transactions for existing customers.",
+          "description": "Financial transactions related to a customer's account. Includes 'customerId' and 'createdByUserId' (Admin UID) for authorization. Only Admin can create transactions for existing customers.",
           "params": [
             {
               "name": "customerId",
@@ -1044,7 +1020,7 @@
           "schema": {
             "$ref": "#/backend/entities/Sale"
           },
-          "description": "Records of customer purchases. Includes 'createdByUserId' (Retailer UID) for authorization. Retailers can manage their own sales, Admin can read all sales.",
+          "description": "Records of customer purchases. Includes 'createdByUserId' (Admin UID) for authorization. Admin can manage all sales.",
           "params": [
             {
               "name": "saleId",
@@ -1060,7 +1036,7 @@
           "schema": {
             "$ref": "#/backend/entities/SaleItem"
           },
-          "description": "Details of individual medicine items within a sale transaction. Includes denormalized 'saleId' and 'saleCreatedByUserId' (Retailer UID) for authorization independence.",
+          "description": "Details of individual medicine items within a sale transaction. Includes denormalized 'saleId' and 'saleCreatedByUserId' (Admin UID) for authorization independence.",
           "params": [
             {
               "name": "saleId",
@@ -1116,7 +1092,7 @@
           "schema": {
             "$ref": "#/backend/entities/StockAdjustmentLog"
           },
-          "description": "Immutable audit log of all manual stock adjustments. Includes 'adjustedByUserId' (Admin/Retailer UID) for accountability. Read-only for Admin, write-only for the user performing the adjustment.",
+          "description": "Immutable audit log of all manual stock adjustments. Includes 'adjustedByUserId' (Admin UID) for accountability. Read-only for Admin, write-only for the admin performing the adjustment.",
           "params": [
             {
               "name": "logId",
@@ -1126,22 +1102,22 @@
         }
       },
       {
-        "path": "/requests/{requestId}",
+        "path": "/public_medicine_requests/{requestId}",
         "definition": {
-          "entityName": "Request",
+          "entityName": "PublicMedicineRequest",
           "schema": {
-            "$ref": "#/backend/entities/Request"
+            "$ref": "#/backend/entities/PublicMedicineRequest"
           },
-          "description": "Requests between Admin and Retailers. Includes 'requesterUserId' and 'responderUserId' for explicit access control and collaboration.",
+          "description": "Public-facing medicine requests. Anyone can create, only Admins can read/update.",
           "params": [
             {
               "name": "requestId",
-              "description": "The unique ID of the request."
+              "description": "The unique ID of the medicine request."
             }
           ]
         }
       }
     ],
-    "reasoning": "The proposed Firestore structure for 'Sateri Medical' prioritizes security, scalability, and debuggability by adhering to the core design principles, especially Authorization Independence and Structural Segregation. The design leverages top-level collections for universally accessible or globally managed entities and subcollections for tightly coupled transactional or itemized data. Authorization relies on a Role-Based Access Control (RBAC) model, where user roles ('Admin', 'Retailer') are stored in their respective `/users/{userId}` documents. Security rules will fetch this role to determine read/write permissions across collections.\n\nAuthorization Independence is achieved primarily through denormalization. For subcollections that conceptually depend on a parent document's authorization context (e.g., `PurchaseOrderItem` needing the `PurchaseOrder`'s creator's permissions), the necessary authorization fields (like `createdByUserId` from the parent) are explicitly copied into each subcollection document (e.g., `purchaseOrderCreatedByUserId` in `PurchaseOrderItem`). This eliminates the need for `get()` calls in Firestore Security Rules to retrieve parent documents for authorization checks. This approach ensures that atomic operations (transactions/batches) involving parent and child documents remain secure and do not encounter `get()`-related rule evaluation issues.\n\nQueryability and Authorization (QAPs - Rules are not Filters) are supported by segregating data based on its security posture:\n\n1.  **Globally Accessible (with Role-Based Write):** Collections like `/medicine_compositions`, `/medicines`, `/batches`, and `/suppliers` are designed to be globally readable by all authenticated 'Admin' and 'Retailer' users. Write access to these collections is restricted to 'Admin' users only. This homogeneous security posture allows for efficient `list` queries (e.g., listing all medicines) without requiring complex `where` clauses for authorization, as the rules already ensure only authorized users can perform these operations.\n\n2.  **User-Owned/Context-Specific Data:** Collections such as `/sales`, `/purchase_orders`, `/returns_to_vendor`, `/stock_adjustment_logs`, and `/requests` contain a `createdByUserId` or similar field explicitly linking them to the creating user (Admin or Retailer). For example, a 'Retailer' can `list` their own sales from `/sales` because the rules will enforce `request.auth.uid == resource.data.createdByUserId` for write operations and allow reads for specific users or admins globally. This design ensures that a user can only access documents they are authorized for directly through a field in the document, without filtering the query results in the rules.\n\n3.  **Customer Management:** `/customers` is a top-level collection managed by 'Admin', with 'Retailers' having read access to facilitate sales. `CustomerAccountTransaction`s are subcollections under a specific customer, containing `createdByUserId` to track which Retailer/Admin processed the transaction.\n\nThis structure makes authorization intent explicit, reduces complexity in security rules, and supports efficient data retrieval while upholding strong security requirements."
+    "reasoning": "The proposed Firestore structure for 'Sateri Medical' prioritizes security, scalability, and debuggability by adhering to the core design principles, especially Authorization Independence and Structural Segregation. The design leverages top-level collections for universally accessible or globally managed entities and subcollections for tightly coupled transactional or itemized data. Authorization relies on a Role-Based Access Control (RBAC) model, where a user's role ('Admin') is stored in their respective `/users/{userId}` document. Security rules will fetch this role to determine read/write permissions across collections.\n\nAuthorization Independence is achieved primarily through denormalization. For subcollections that conceptually depend on a parent document's authorization context (e.g., `PurchaseOrderItem` needing the `PurchaseOrder`'s creator's permissions), the necessary authorization fields (like `createdByUserId` from the parent) are explicitly copied into each subcollection document (e.g., `purchaseOrderCreatedByUserId` in `PurchaseOrderItem`). This eliminates the need for `get()` calls in Firestore Security Rules to retrieve parent documents for authorization checks. This approach ensures that atomic operations (transactions/batches) involving parent and child documents remain secure and do not encounter `get()`-related rule evaluation issues.\n\nQueryability and Authorization (QAPs - Rules are not Filters) are supported by segregating data based on its security posture:\n\n1.  **Globally Accessible (with Role-Based Write):** Collections like `/medicine_compositions`, `/medicines`, `/batches`, and `/suppliers` are designed to be globally readable by all authenticated 'Admin' users. Write access to these collections is restricted to 'Admin' users only. This homogeneous security posture allows for efficient `list` queries (e.g., listing all medicines) without requiring complex `where` clauses for authorization, as the rules already ensure only authorized users can perform these operations.\n\n2.  **User-Owned/Context-Specific Data:** Collections such as `/sales`, `/purchase_orders`, `/returns_to_vendor`, and `/stock_adjustment_logs` contain a `createdByUserId` or similar field explicitly linking them to the creating user (Admin). For example, an 'Admin' can `list` their own sales from `/sales` because the rules will enforce `request.auth.uid == resource.data.createdByUserId` for write operations and allow reads for specific users or admins globally. This design ensures that a user can only access documents they are authorized for directly through a field in the document, without filtering the query results in the rules.\n\n3.  **Customer Management:** `/customers` is a top-level collection managed by 'Admin', with reads for all authenticated users. `CustomerAccountTransaction`s are subcollections under a specific customer, containing `createdByUserId` to track which Admin processed the transaction."
   }
 }

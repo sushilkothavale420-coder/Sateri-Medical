@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import { SalesChart } from "./components/sales-chart";
 import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
-import { collectionGroup, query, orderBy, limit, collection, where } from "firebase/firestore";
+import { collectionGroup, query, orderBy, limit, collection } from "firebase/firestore";
 import { Sale, SaleItem, Customer } from "@/lib/types";
 import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
@@ -35,21 +35,13 @@ export default function DashboardPage() {
   const { user } = useUser();
   const [customerNames, setCustomerNames] = useState<Record<string, string>>({});
   
-  const isAdmin = user?.uid === 'a6jWnMQZfLY82mBA3g0DIMxYRFZ2';
-
   const recentSalesQuery = useMemoFirebase(
     () => {
       if (!firestore || !user) return null;
-      
       const salesCollection = collection(firestore, 'sales');
-
-      if (isAdmin) {
-        return query(salesCollection, orderBy('saleDate', 'desc'), limit(5));
-      } else {
-        return query(salesCollection, where('createdByUserId', '==', user.uid), orderBy('saleDate', 'desc'), limit(5));
-      }
+      return query(salesCollection, orderBy('saleDate', 'desc'), limit(5));
     },
-    [firestore, user, isAdmin]
+    [firestore, user]
   );
   const { data: recentSales, isLoading: isLoadingRecentSales } = useCollection<Sale>(recentSalesQuery);
 
@@ -62,14 +54,9 @@ export default function DashboardPage() {
   const saleItemsQuery = useMemoFirebase(
     () => {
       if (!firestore || !user) return null;
-      const saleItemsCollectionGroup = collectionGroup(firestore, 'sale_items');
-      if (isAdmin) {
-        return saleItemsCollectionGroup;
-      } else {
-        return query(saleItemsCollectionGroup, where('createdByUserId', '==', user.uid));
-      }
+      return collectionGroup(firestore, 'sale_items');
     },
-    [firestore, user, isAdmin]
+    [firestore, user]
   );
   const { data: saleItems, isLoading: isLoadingSaleItems } = useCollection<SaleItem>(saleItemsQuery);
 

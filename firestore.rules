@@ -3,10 +3,9 @@
  *
  * Core Philosophy:
  * This ruleset implements a strict Role-Based Access Control (RBAC) model.
- * There is one primary Admin identified by a specific UID and a 'Retailer' role,
+ * There is one primary Admin identified by a specific UID and an 'Admin' role,
  * defined in a user's profile document in the `/users` collection. The Admin has
- * broad control over core business data, while Retailers have permissions
- * focused on transactional data they create.
+ * broad control over all data.
  *
  * Data Structure:
  * The data is organized into top-level collections for major entities (e.g.,
@@ -16,14 +15,12 @@
  *
  * Key Security Decisions:
  * - Default Deny: All access is denied by default. Rules only grant explicit permissions.
- * - Admin by UID: A specific user UID is designated as the Admin.
- * - Retailer by Role: The 'Retailer' role is fetched from their /users/{userId} document.
- * - Admin Supremacy: The Admin has read access to almost all data and write access
- *   to core inventory, procurement, and user collections.
- * - Retailer Permissions: Retailers can read shared data like the medicine catalog
- *   but can only create/manage their own sales records.
+ * - Admin by UID and Role: The Admin is verified by a specific UID and their role in /users.
+ * - Admin Supremacy: The Admin has full read and write access to all business data.
  * - Immutability: Critical relational fields like a creator's ID (`createdByUserId`)
  *   are enforced as immutable after creation to maintain data integrity.
+ * - Public Write for Requests: A specific collection is open for public writes to allow
+ *   unauthenticated users to submit medicine requests.
  *
  */
 rules_version = '2';
@@ -66,14 +63,7 @@ service cloud.firestore {
      * Returns true if the authenticated user is the designated Admin.
      */
     function isAdmin() {
-      return isSignedIn() && request.auth.uid == 'a6jWnMQZfLY82mBA3g0DIMxYRFZ2';
-    }
-
-    /**
-     * Returns true if the authenticated user has the 'Retailer' role.
-     */
-    function isRetailer() {
-      return isSignedIn() && getUserRole() == 'Retailer';
+      return isSignedIn() && getUserRole() == 'Admin';
     }
 
     /**
@@ -102,7 +92,7 @@ service cloud.firestore {
     // -------------------------------------------------------------------------
 
     /**
-     * @description Manages user profiles. Only Admin can create users.
+     * @description Manages user profiles. Only Admin can manage users.
      * @path /users/{userId}
      * @allow (create, list, delete) Admin can manage all user profiles.
      * @allow (get, update) An existing user can read/update their own profile.
@@ -190,32 +180,31 @@ service cloud.firestore {
     // -------------------------------------------------------------------------
 
     /**
-     * @description Customer records. Managed by Admins, readable by all users.
+     * @description Customer records. Managed by Admins, readable by all signed-in users.
      */
     match /customers/{customerId} {
       allow get, list: if isSignedIn();
       allow create, update, delete: if isAdmin();
       
       /**
-       * @description Customer financial transactions.
+       * @description Customer financial transactions. Only Admins can manage.
        */
       match /transactions/{transactionId} {
         allow get, list: if isSignedIn();
-        allow create: if isCreator('createdByUserId') && (isRetailer() || isAdmin()) && exists(/databases/$(database)/documents/customers/$(customerId));
+        allow create: if isCreator('createdByUserId') && isAdmin() && exists(/databases/$(database)/documents/customers/$(customerId));
         allow update: if isExistingOwner(resource.data.createdByUserId) && isImmutable('createdByUserId');
         allow delete: if isExistingOwner(resource.data.createdByUserId);
       }
     }
 
     /**
-     * @description Sales records. Retailers manage their own, Admins can read all.
+     * @description Sales records. Admins manage all sales.
      */
     match /sales/{saleId} {
-      allow get: if isAdmin() || isExistingOwner(resource.data.createdByUserId);
-      allow list: if isSignedIn();
-      allow create: if isCreator('createdByUserId') && (isRetailer() || isAdmin());
-      allow update: if isExistingOwner(resource.data.createdByUserId) && isImmutable('createdByUserId');
-      allow delete: if isExistingOwner(resource.data.createdByUserId);
+      allow get, list: if isAdmin();
+      allow create: if isCreator('createdByUserId') && isAdmin();
+      allow update: if isAdmin() && isImmutable('createdByUserId');
+      allow delete: if isAdmin();
 
       /**
        * @description Items within a sale.
@@ -223,13 +212,24 @@ service cloud.firestore {
       match /sale_items/{saleItemId} {
         
         function canAccessParentSale() {
-          let parentSale = get(/databases/$(database)/documents/sales/$(saleId)).data;
-          return isAdmin() || isOwner(parentSale.createdByUserId);
+          return isAdmin();
         }
 
         allow get: if isSignedIn();
         allow create, update, delete: if canAccessParentSale();
       }
+    }
+    
+    // -------------------------------------------------------------------------
+    // Public Medicine Requests
+    // -------------------------------------------------------------------------
+    
+    /**
+     * @description Public-facing medicine requests. Anyone can create. Admin can manage.
+     */
+    match /public_medicine_requests/{requestId} {
+      allow create: if true;
+      allow get, list, update, delete: if isAdmin();
     }
 
     // -------------------------------------------------------------------------
@@ -237,27 +237,12 @@ service cloud.firestore {
     // -------------------------------------------------------------------------
 
     /**
-     * @description Immutable log of stock changes. Create-only for users, read-only for Admins.
+     * @description Immutable log of stock changes. Create-only for admin, read-only for Admins.
      */
     match /stock_adjustment_logs/{logId} {
       allow get, list: if isAdmin();
-      allow create: if isCreator('adjustedByUserId') && (isRetailer() || isAdmin());
+      allow create: if isCreator('adjustedByUserId') && isAdmin();
       allow update: if false;
-      allow delete: if false;
-    }
-
-    /**
-     * @description Requests between users (Admin/Retailer).
-     */
-    match /requests/{requestId} {
-      function isParticipant() {
-        return isOwner(resource.data.requesterUserId) || isOwner(resource.data.responderUserId);
-      }
-
-      allow get: if isParticipant();
-      allow list: if false;
-      allow create: if isCreator('requesterUserId') && (isRetailer() || isAdmin());
-      allow update: if isExistingDoc() && isParticipant() && isImmutable('requesterUserId');
       allow delete: if false;
     }
     

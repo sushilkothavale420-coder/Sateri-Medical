@@ -14,11 +14,13 @@ import {
 import Autoplay from 'embla-carousel-autoplay';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { RequestMedicineDialog } from '@/components/request-medicine-dialog';
 
 export default function HomePage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
+  const [isRequestOpen, setRequestOpen] = useState(false);
 
   const plugin = React.useRef(
     Autoplay({ delay: 3000, stopOnInteraction: true })
@@ -42,11 +44,11 @@ export default function HomePage() {
     <main className="flex min-h-screen flex-col items-center p-8 bg-background">
       <div className="relative w-full max-w-6xl">
         <div className="absolute top-0 right-0 flex items-center gap-4">
+          <RequestMedicineDialog isOpen={isRequestOpen} onOpenChange={setRequestOpen}>
+            <Button variant="outline">Request a Medicine</Button>
+          </RequestMedicineDialog>
           <Button asChild>
-            <Link href="/login">Login as Admin</Link>
-          </Button>
-          <Button asChild variant="secondary">
-            <Link href="/login">Login as Retailer</Link>
+            <Link href="/login">Admin Login</Link>
           </Button>
         </div>
 

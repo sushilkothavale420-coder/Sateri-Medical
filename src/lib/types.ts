@@ -29,18 +29,10 @@ export const stockEntrySchema = z.object({
 
 export type StockEntry = z.infer<typeof stockEntrySchema>;
 
-
-export const newRetailerSchema = z.object({
-  email: z.string().email("Invalid email address."),
-  password: z.string().min(6, "Password must be at least 6 characters long."),
-});
-
-export type NewRetailer = z.infer<typeof newRetailerSchema>;
-
 export type UserProfile = {
   id: string;
   email: string;
-  role: 'Admin' | 'Retailer';
+  role: 'Admin';
   createdAt: any;
   updatedAt: any;
 };
@@ -94,5 +86,18 @@ export const saleItemSchema = z.object({
 
 export type SaleItem = z.infer<typeof saleItemSchema> & {
   id: string;
+  createdAt: any;
+};
+
+export const publicMedicineRequestSchema = z.object({
+  name: z.string().min(1, "Name is required."),
+  contactNumber: z.string().min(1, "Contact number is required."),
+  place: z.string().min(1, "Place is required."),
+  medicineName: z.string().min(3, "Please enter medicine details."),
+});
+
+export type PublicMedicineRequest = z.infer<typeof publicMedicineRequestSchema> & {
+  id: string;
+  status: 'Pending' | 'Contacted' | 'Fulfilled';
   createdAt: any;
 };

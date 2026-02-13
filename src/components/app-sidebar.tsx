@@ -17,7 +17,6 @@ import {
   Users,
   BarChart2,
   LogOut,
-  Handshake,
   Warehouse,
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
@@ -30,7 +29,6 @@ const navItems = [
   { href: '/stock', icon: Warehouse, label: 'Stock Management' },
   { href: '/sales', icon: ShoppingBag, label: 'Sales (POS)' },
   { href: '/customers', icon: Users, label: 'Customers' },
-  { href: '/retailers', icon: Handshake, label: 'Retailers' },
   { href: '/reports', icon: BarChart2, label: 'Reports' },
 ];
 
