@@ -24,19 +24,32 @@ import {
   TrendingUp
 } from "lucide-react";
 import { SalesChart } from "./components/sales-chart";
-import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
-import { collectionGroup, query, orderBy, limit, collection } from "firebase/firestore";
+import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
+import { collectionGroup, query, orderBy, limit, collection, where } from "firebase/firestore";
 import { Sale, SaleItem, Customer } from "@/lib/types";
 import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 
 export default function DashboardPage() {
   const firestore = useFirestore();
+  const { user } = useUser();
   const [customerNames, setCustomerNames] = useState<Record<string, string>>({});
   
+  const isAdmin = user?.uid === 'a6jWnMQZfLY82mBA3g0DIMxYRFZ2';
+
   const recentSalesQuery = useMemoFirebase(
-    () => (firestore ? query(collection(firestore, 'sales'), orderBy('saleDate', 'desc'), limit(5)) : null),
-    [firestore]
+    () => {
+      if (!firestore || !user) return null;
+      
+      const salesCollection = collection(firestore, 'sales');
+
+      if (isAdmin) {
+        return query(salesCollection, orderBy('saleDate', 'desc'), limit(5));
+      } else {
+        return query(salesCollection, where('createdByUserId', '==', user.uid), orderBy('saleDate', 'desc'), limit(5));
+      }
+    },
+    [firestore, user, isAdmin]
   );
   const { data: recentSales, isLoading: isLoadingRecentSales } = useCollection<Sale>(recentSalesQuery);
 
