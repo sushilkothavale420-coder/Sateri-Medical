@@ -15,11 +15,9 @@ import {
   Boxes,
   ShoppingBag,
   Users,
-  BarChart2,
   LogOut,
   Warehouse,
   Truck,
-  Settings,
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/firebase';
@@ -32,7 +30,6 @@ const navItems = [
   { href: '/stock', icon: Warehouse, label: 'Stock' },
   { href: '/customers', icon: Users, label: 'Customers' },
   { href: '/suppliers', icon: Truck, label: 'Suppliers' },
-  { href: '/reports', icon: BarChart2, label: 'Reports' },
 ];
 
 export function AppSidebar() {
@@ -69,14 +66,6 @@ export function AppSidebar() {
       <SidebarSeparator />
       <SidebarFooter>
         <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip={{children: 'Settings'}}>
-                <Link href="/settings">
-                    <Settings />
-                    <span>Settings</span>
-                </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton onClick={() => auth.signOut()} tooltip={{ children: 'Logout' }}>
               <LogOut />
