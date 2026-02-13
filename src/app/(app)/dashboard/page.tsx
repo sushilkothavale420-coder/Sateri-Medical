@@ -53,8 +53,8 @@ export default function DashboardPage() {
   const { data: recentSales } = useCollection<Sale>(recentSalesQuery);
 
   const customersQuery = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'customers') : null),
-    [firestore]
+    () => (firestore && user ? collection(firestore, 'customers') : null),
+    [firestore, user]
   );
   const { data: customers } = useCollection<Customer>(customersQuery);
 
@@ -68,8 +68,8 @@ export default function DashboardPage() {
   const { data: saleItems } = useCollection<SaleItem>(saleItemsQuery);
   
   const batchesQuery = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'batches') : null),
-    [firestore]
+    () => (firestore && user ? collection(firestore, 'batches') : null),
+    [firestore, user]
   );
   const { data: batches } = useCollection<Batch>(batchesQuery);
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { SaleItem, Medicine } from "@/lib/types";
 import { collection } from "firebase/firestore";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -12,16 +12,17 @@ type SaleItemsTableProps = {
 
 export function SaleItemsTable({ saleId }: SaleItemsTableProps) {
     const firestore = useFirestore();
+    const { user } = useUser();
 
     const saleItemsQuery = useMemoFirebase(
-        () => (firestore ? collection(firestore, 'sales', saleId, 'sale_items') : null),
-        [firestore, saleId]
+        () => (firestore && user ? collection(firestore, 'sales', saleId, 'sale_items') : null),
+        [firestore, saleId, user]
     );
     const { data: saleItems, isLoading: isSaleItemsLoading } = useCollection<SaleItem>(saleItemsQuery);
 
     const medicinesQuery = useMemoFirebase(
-      () => (firestore ? collection(firestore, 'medicines') : null),
-      [firestore]
+      () => (firestore && user ? collection(firestore, 'medicines') : null),
+      [firestore, user]
     );
     const { data: medicines, isLoading: areMedicinesLoading } = useCollection<Medicine>(medicinesQuery);
 

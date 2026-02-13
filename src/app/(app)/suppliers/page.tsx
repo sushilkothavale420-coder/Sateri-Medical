@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import { collection } from 'firebase/firestore';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
 import { Batch, Supplier } from '@/lib/types';
 import { SuppliersDataTable } from './components/suppliers-data-table';
 import { Columns } from './components/columns';
@@ -17,20 +17,21 @@ import { InitiateReturnDialog } from './components/initiate-return-dialog';
 export default function SuppliersPage() {
   const firestore = useFirestore();
   const { isAdmin } = useAdmin();
+  const { user } = useUser();
   const [isAddDialogOpen, setAddDialogOpen] = useState(false);
   const [isReturnDialogOpen, setReturnDialogOpen] = useState(false);
   const [selectedSupplierForAction, setSelectedSupplierForAction] = useState<Supplier | null>(null);
 
 
   const suppliersQuery = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'suppliers') : null),
-    [firestore]
+    () => (firestore && user ? collection(firestore, 'suppliers') : null),
+    [firestore, user]
   );
   const { data: suppliers } = useCollection<Supplier>(suppliersQuery);
 
   const batchesQuery = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'batches') : null),
-    [firestore]
+    () => (firestore && user ? collection(firestore, 'batches') : null),
+    [firestore, user]
   );
   const { data: batches } = useCollection<Batch>(batchesQuery);
   

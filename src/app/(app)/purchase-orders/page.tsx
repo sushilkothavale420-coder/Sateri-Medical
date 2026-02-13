@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import { collection, query, orderBy } from 'firebase/firestore';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
 import { PurchaseOrder, Supplier } from '@/lib/types';
 import { PurchaseOrdersDataTable } from './components/po-data-table';
 import { columns } from './components/columns';
@@ -14,16 +14,17 @@ import { useMemo } from 'react';
 export default function PurchaseOrdersPage() {
   const firestore = useFirestore();
   const { isAdmin } = useAdmin();
+  const { user } = useUser();
 
   const poQuery = useMemoFirebase(
-    () => (firestore ? query(collection(firestore, 'purchase_orders'), orderBy('orderDate', 'desc')) : null),
-    [firestore]
+    () => (firestore && user ? query(collection(firestore, 'purchase_orders'), orderBy('orderDate', 'desc')) : null),
+    [firestore, user]
   );
   const { data: purchaseOrders } = useCollection<PurchaseOrder>(poQuery);
 
   const suppliersQuery = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'suppliers') : null),
-    [firestore]
+    () => (firestore && user ? collection(firestore, 'suppliers') : null),
+    [firestore, user]
   );
   const { data: suppliers } = useCollection<Supplier>(suppliersQuery);
 

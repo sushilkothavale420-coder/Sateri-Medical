@@ -28,10 +28,10 @@ export default function CreatePurchaseOrderPage() {
   const { user } = useUser();
   const { toast } = useToast();
 
-  const medicinesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'medicines') : null, [firestore]);
+  const medicinesQuery = useMemoFirebase(() => firestore && user ? collection(firestore, 'medicines') : null, [firestore, user]);
   const { data: medicines } = useCollection<Medicine>(medicinesQuery);
 
-  const suppliersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'suppliers') : null, [firestore]);
+  const suppliersQuery = useMemoFirebase(() => firestore && user ? collection(firestore, 'suppliers') : null, [firestore, user]);
   const { data: suppliers } = useCollection<Supplier>(suppliersQuery);
 
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);

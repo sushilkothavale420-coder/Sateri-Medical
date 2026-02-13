@@ -22,8 +22,8 @@ export default function AppLayout({
   const auth = useAuth();
 
   const batchesQuery = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'batches') : null),
-    [firestore]
+    () => (firestore && user ? collection(firestore, 'batches') : null),
+    [firestore, user]
   );
   const { data: batches } = useCollection<Batch>(batchesQuery);
 

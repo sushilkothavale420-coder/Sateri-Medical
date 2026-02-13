@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Medicine, stockEntrySchema, Batch } from '@/lib/types';
 import { collection, query, orderBy } from 'firebase/firestore';
@@ -32,20 +32,21 @@ type StockEntryFormValues = z.infer<typeof stockEntrySchema>;
 export default function StockManagementPage() {
   const firestore = useFirestore();
   const { isAdmin, isLoading: isAdminLoading } = useAdmin();
+  const { user } = useUser();
   const { toast } = useToast();
   const [open, setOpen] = useState(false)
   const [selectedMedicine, setSelectedMedicine] = useState<Medicine | null>(null);
 
   const batchesQuery = useMemoFirebase(
-    () => (firestore ? query(collection(firestore, 'batches'), orderBy('receivedAt', 'desc')) : null),
-    [firestore]
+    () => (firestore && user ? query(collection(firestore, 'batches'), orderBy('receivedAt', 'desc')) : null),
+    [firestore, user]
   );
   const { data: batches } = useCollection<Batch>(batchesQuery);
   const { columns, isDeleteOpen, setDeleteOpen, selectedBatch } = Columns();
 
   const medicinesQuery = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'medicines') : null),
-    [firestore]
+    () => (firestore && user ? collection(firestore, 'medicines') : null),
+    [firestore, user]
   );
   const { data: medicines } = useCollection<Medicine>(medicinesQuery);
 

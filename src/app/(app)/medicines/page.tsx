@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import { collection } from 'firebase/firestore';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
 import { Medicine } from '@/lib/types';
 import { MedicinesDataTable } from './components/medicines-data-table';
 import { Columns } from './components/columns';
@@ -16,11 +16,12 @@ import { useAdmin } from '@/hooks/use-admin';
 export default function MedicinesPage() {
   const firestore = useFirestore();
   const { isAdmin } = useAdmin();
+  const { user } = useUser();
   const [isAddDialogOpen, setAddDialogOpen] = useState(false);
   
   const medicinesQuery = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'medicines') : null),
-    [firestore]
+    () => (firestore && user ? collection(firestore, 'medicines') : null),
+    [firestore, user]
   );
   const { data: medicines } = useCollection<Medicine>(medicinesQuery);
 

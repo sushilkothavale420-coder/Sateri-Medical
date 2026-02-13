@@ -53,13 +53,13 @@ export default function CustomerDetailPage() {
 
   const [isPaymentDialogOpen, setPaymentDialogOpen] = useState(false);
 
-  const customerDocRef = useMemoFirebase(() => (firestore && customerId ? doc(firestore, 'customers', customerId) : null), [firestore, customerId]);
+  const customerDocRef = useMemoFirebase(() => (firestore && customerId && user ? doc(firestore, 'customers', customerId) : null), [firestore, customerId, user]);
   const { data: customer, isLoading: isCustomerLoading } = useDoc<Customer>(customerDocRef);
 
-  const salesQuery = useMemoFirebase(() => (firestore && customerId ? query(collection(firestore, 'sales'), where('customerId', '==', customerId)) : null), [firestore, customerId]);
+  const salesQuery = useMemoFirebase(() => (firestore && customerId && user ? query(collection(firestore, 'sales'), where('customerId', '==', customerId)) : null), [firestore, customerId, user]);
   const { data: sales, isLoading: areSalesLoading } = useCollection<Sale>(salesQuery);
 
-  const transactionsQuery = useMemoFirebase(() => (firestore && customerId ? query(collection(firestore, 'customers', customerId, 'transactions'), orderBy('transactionDate', 'desc')) : null), [firestore, customerId]);
+  const transactionsQuery = useMemoFirebase(() => (firestore && customerId && user ? query(collection(firestore, 'customers', customerId, 'transactions'), orderBy('transactionDate', 'desc')) : null), [firestore, customerId, user]);
   const { data: transactions, isLoading: areTransactionsLoading } = useCollection<CustomerAccountTransaction>(transactionsQuery);
   
   const form = useForm<PaymentFormValues>({

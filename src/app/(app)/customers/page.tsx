@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import { collection } from 'firebase/firestore';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
 import { Customer } from '@/lib/types';
 import { CustomersDataTable } from './components/customers-data-table';
 import { Columns } from './components/columns';
@@ -18,12 +18,13 @@ import { Label } from '@/components/ui/label';
 export default function CustomersPage() {
   const firestore = useFirestore();
   const { isAdmin } = useAdmin();
+  const { user } = useUser();
   const [isAddDialogOpen, setAddDialogOpen] = useState(false);
   const [showOnlyWithBalance, setShowOnlyWithBalance] = useState(false);
   
   const customersQuery = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'customers') : null),
-    [firestore]
+    () => (firestore && user ? collection(firestore, 'customers') : null),
+    [firestore, user]
   );
   const { data: customers } = useCollection<Customer>(customersQuery);
 

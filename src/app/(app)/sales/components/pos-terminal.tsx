@@ -31,10 +31,10 @@ export function PosTerminal() {
   const { user } = useUser();
   const { toast } = useToast();
 
-  const medicinesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'medicines') : null, [firestore]);
+  const medicinesQuery = useMemoFirebase(() => firestore && user ? collection(firestore, 'medicines') : null, [firestore, user]);
   const { data: medicines } = useCollection<Medicine>(medicinesQuery);
 
-  const customersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'customers') : null, [firestore]);
+  const customersQuery = useMemoFirebase(() => firestore && user ? collection(firestore, 'customers') : null, [firestore, user]);
   const { data: customers } = useCollection<Customer>(customersQuery);
 
   const [cart, setCart] = useState<CartItem[]>([]);
