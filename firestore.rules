@@ -153,7 +153,8 @@ service cloud.firestore {
        */
       match /purchase_order_items/{purchaseOrderItemId} {
         allow get, list: if isAdmin();
-        allow create, update, delete: if isAdmin() && exists(/databases/$(database)/documents/purchase_orders/$(purchaseOrderId));
+        allow create: if isAdmin();
+        allow update, delete: if isAdmin() && exists(/databases/$(database)/documents/purchase_orders/$(purchaseOrderId));
       }
     }
 
@@ -169,7 +170,8 @@ service cloud.firestore {
        */
       match /return_to_vendor_items/{returnToVendorItemId} {
         allow get, list: if isAdmin();
-        allow create, update, delete: if isAdmin() && exists(/databases/$(database)/documents/returns_to_vendor/$(returnToVendorId));
+        allow create: if isAdmin();
+        allow update, delete: if isAdmin() && exists(/databases/$(database)/documents/returns_to_vendor/$(returnToVendorId));
       }
     }
 
