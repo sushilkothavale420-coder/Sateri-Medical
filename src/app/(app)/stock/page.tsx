@@ -11,19 +11,21 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, Check, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
 import { useToast } from '@/hooks/use-toast';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
 
 export default function StockManagementPage() {
   const firestore = useFirestore();
   const { user } = useUser();
   const { toast } = useToast();
+  const [open, setOpen] = useState(false)
+  const [selectedMedicine, setSelectedMedicine] = useState<Medicine | null>(null);
 
   const medicinesQuery = useMemoFirebase(
     () => (firestore ? collection(firestore, 'medicines') : null),
@@ -37,7 +39,6 @@ export default function StockManagementPage() {
       medicineId: '',
       batchNumber: '',
       quantity: undefined,
-      unit: 'Tablet',
       purchasePricePerSmallestUnit: undefined,
     },
   });
@@ -45,21 +46,15 @@ export default function StockManagementPage() {
   const onSubmit = (values: StockEntry) => {
     if (!firestore || !user) return;
 
-    const selectedMedicine = medicines?.find(m => m.id === values.medicineId);
     if (!selectedMedicine) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Selected medicine not found.' });
+        toast({ variant: 'destructive', title: 'Error', description: 'Please select a medicine.' });
         return;
     }
 
-    let quantityInSmallestUnits = values.quantity;
-    if (values.unit === 'Strip') {
-        const tabletsPerStrip = selectedMedicine.tabletsPerStrip || 1;
-        quantityInSmallestUnits = values.quantity * tabletsPerStrip;
-    } else if (values.unit === 'Box') {
-        const tabletsPerStrip = selectedMedicine.tabletsPerStrip || 1;
-        const stripsPerBox = selectedMedicine.stripsPerBox || 1;
-        quantityInSmallestUnits = values.quantity * stripsPerBox * tabletsPerStrip;
-    }
+    const quantityInBoxes = values.quantity;
+    const tabletsPerStrip = selectedMedicine.tabletsPerStrip || 1;
+    const stripsPerBox = selectedMedicine.stripsPerBox || 1;
+    const quantityInSmallestUnits = quantityInBoxes * stripsPerBox * tabletsPerStrip;
 
     const newBatch = {
       medicineId: values.medicineId,
@@ -78,9 +73,10 @@ export default function StockManagementPage() {
 
     toast({
         title: 'Stock Added',
-        description: `Added ${values.quantity} ${values.unit}(s) of ${selectedMedicine.name} to inventory.`
+        description: `Added ${values.quantity} Box(es) of ${selectedMedicine.name} to inventory.`
     });
     form.reset();
+    setSelectedMedicine(null);
   };
 
   const isAdmin = user?.uid === 'a6jWnMQZfLY82mBA3g0DIMxYRFZ2';
@@ -110,28 +106,65 @@ export default function StockManagementPage() {
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                         <FormField
-                            control={form.control}
-                            name="medicineId"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Medicine</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger disabled={isLoadingMedicines}>
-                                                <SelectValue placeholder="Select a medicine" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {medicines?.map(med => (
-                                                <SelectItem key={med.id} value={med.id}>
-                                                    {med.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
+                          control={form.control}
+                          name="medicineId"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-col">
+                              <FormLabel>Medicine</FormLabel>
+                              <Popover open={open} onOpenChange={setOpen}>
+                                <PopoverTrigger asChild>
+                                  <FormControl>
+                                    <Button
+                                      variant="outline"
+                                      role="combobox"
+                                      disabled={isLoadingMedicines}
+                                      className={cn(
+                                        "w-full justify-between",
+                                        !field.value && "text-muted-foreground"
+                                      )}
+                                    >
+                                      {field.value
+                                        ? medicines?.find(
+                                            (med) => med.id === field.value
+                                          )?.name
+                                        : "Select medicine"}
+                                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                    </Button>
+                                  </FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                  <Command>
+                                    <CommandInput placeholder="Search medicine..." />
+                                    <CommandEmpty>No medicine found.</CommandEmpty>
+                                    <CommandGroup>
+                                      {medicines?.map((med) => (
+                                        <CommandItem
+                                          value={med.name}
+                                          key={med.id}
+                                          onSelect={() => {
+                                            form.setValue("medicineId", med.id)
+                                            setSelectedMedicine(med);
+                                            setOpen(false)
+                                          }}
+                                        >
+                                          <Check
+                                            className={cn(
+                                              "mr-2 h-4 w-4",
+                                              med.id === field.value
+                                                ? "opacity-100"
+                                                : "opacity-0"
+                                            )}
+                                          />
+                                          {med.name}
+                                        </CommandItem>
+                                      ))}
+                                    </CommandGroup>
+                                  </Command>
+                                </PopoverContent>
+                              </Popover>
+                              <FormMessage />
+                            </FormItem>
+                          )}
                         />
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <FormField
@@ -202,43 +235,19 @@ export default function StockManagementPage() {
                                     </FormItem>
                                 )}
                             />
-                            <div className="grid grid-cols-2 gap-4">
-                                <FormField
-                                    control={form.control}
-                                    name="quantity"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Quantity</FormLabel>
-                                            <FormControl>
-                                                <Input type="number" placeholder="e.g. 100" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} value={Number.isFinite(field.value) ? field.value : ''} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="unit"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Unit</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                <FormControl>
-                                                    <SelectTrigger>
-                                                        <SelectValue />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    <SelectItem value="Tablet">Tablet</SelectItem>
-                                                    <SelectItem value="Strip">Strip</SelectItem>
-                                                    <SelectItem value="Box">Box</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
+                            <FormField
+                                control={form.control}
+                                name="quantity"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Quantity (in Boxes)</FormLabel>
+                                        <FormControl>
+                                            <Input type="number" placeholder="e.g. 10" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} value={Number.isFinite(field.value) ? field.value : ''} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                         </div>
                         <div className="flex justify-end">
                             <Button type="submit">Add Stock to Inventory</Button>

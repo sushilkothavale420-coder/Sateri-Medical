@@ -24,7 +24,6 @@ export const stockEntrySchema = z.object({
   batchNumber: z.string().min(1, "Batch number is required."),
   expiryDate: z.date({ required_error: "Expiry date is required." }),
   quantity: z.coerce.number().min(1, "Quantity must be at least 1."),
-  unit: z.enum(["Tablet", "Strip", "Box"]),
   purchasePricePerSmallestUnit: z.coerce.number().min(0, "Purchase price is required."),
 });
 
