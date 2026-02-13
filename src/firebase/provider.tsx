@@ -45,6 +45,13 @@ export interface UserHookResult {
   isProfileLoading: boolean;
 }
 
+interface FirebaseProviderProps {
+    children: ReactNode;
+    firebaseApp: FirebaseApp;
+    firestore: Firestore;
+    auth: Auth;
+}
+
 // React Context
 export const FirebaseContext = createContext<FirebaseContextState | undefined>(undefined);
 
@@ -62,7 +69,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     isUserLoading: true, // Start loading until first auth event
     userError: null,
     userProfile: null,
-    isProfileLoading: true,
+    isProfileLoading: false, // Profile loading is no longer relevant for auth
   });
 
   // Effect to subscribe to Firebase auth state changes
@@ -75,9 +82,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     const unsubscribe = onAuthStateChanged(
       auth,
       (firebaseUser) => { // Auth state determined
-        // If the user state changes, we are about to load their profile.
-        // Set loading to true to prevent race conditions in downstream hooks.
-        setUserAuthState(s => ({ ...s, user: firebaseUser, isUserLoading: false, userError: null, isProfileLoading: !!firebaseUser }));
+        setUserAuthState(s => ({ ...s, user: firebaseUser, isUserLoading: false, userError: null, isProfileLoading: false }));
       },
       (error) => { // Auth listener error
         console.error("FirebaseProvider: onAuthStateChanged error:", error);
@@ -86,38 +91,6 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     );
     return () => unsubscribe(); // Cleanup
   }, [auth]); // Depends on the auth instance
-
-
-  // Effect for user profile
-  useEffect(() => {
-    if (userAuthState.user && firestore) {
-      // User is authenticated, start fetching their profile.
-      // Reset profile state and set loading to true before the fetch.
-      setUserAuthState(s => ({ ...s, userProfile: null, isProfileLoading: true }));
-
-      const userProfileRef = doc(firestore, 'users', userAuthState.user.uid);
-      const unsubscribe = onSnapshot(userProfileRef,
-        (snapshot) => {
-          if (snapshot.exists()) {
-            const profileData = { id: snapshot.id, ...snapshot.data() } as UserProfile;
-            setUserAuthState(s => ({ ...s, userProfile: profileData, isProfileLoading: false }));
-          } else {
-            // User document doesn't exist, they have no specific role.
-            setUserAuthState(s => ({ ...s, userProfile: null, isProfileLoading: false }));
-          }
-        },
-        (error) => {
-          console.error("FirebaseProvider: user profile snapshot error:", error);
-          // End loading even if there's an error fetching the profile.
-          setUserAuthState(s => ({ ...s, userProfile: null, isProfileLoading: false }));
-        }
-      );
-      return () => unsubscribe();
-    } else {
-      // No user is authenticated, so there is no profile to fetch.
-      setUserAuthState(s => ({ ...s, userProfile: null, isProfileLoading: false }));
-    }
-  }, [userAuthState.user, firestore]);
 
 
   // Memoize the context value

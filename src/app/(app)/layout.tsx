@@ -55,33 +55,22 @@ export default function AppLayout({
       // Redirect to login with an error message.
       router.push('/login?error=access-denied');
     }
-    // If user is present and is an admin, render the children.
   }, [user, isLoading, isAdmin, router]);
 
 
-  // This blocking loading state is critical to prevent race conditions.
-  if (isLoading) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-background">
-        <p>Loading...</p>
-      </div>
-    );
-  }
-
-  // Only render the full layout if loading is complete and the user is a confirmed admin.
-  // The useEffect above handles redirection, so this prevents a flash of un-styled content.
-  if (isAdmin && user) {
-    return (
-      <SidebarProvider>
-        <AppSidebar />
-        <SidebarInset>
-          <Header notifications={expiringNotifications || []} />
-          {children}
-        </SidebarInset>
-      </SidebarProvider>
-    );
-  }
-
-  // While redirecting, render nothing.
-  return null;
+  return (
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>
+        <Header notifications={expiringNotifications || []} />
+        {isLoading || !isAdmin || !user ? (
+            <main className="flex flex-1 items-center justify-center">
+                <p>Loading...</p>
+            </main>
+        ) : (
+            children
+        )}
+      </SidebarInset>
+    </SidebarProvider>
+  );
 }
