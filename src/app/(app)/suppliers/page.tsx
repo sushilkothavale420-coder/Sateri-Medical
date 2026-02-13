@@ -4,25 +4,56 @@ import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import { collection } from 'firebase/firestore';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { Supplier } from '@/lib/types';
+import { Batch, Supplier } from '@/lib/types';
 import { SuppliersDataTable } from './components/suppliers-data-table';
 import { Columns } from './components/columns';
 import { AddSupplierDialog } from './components/add-supplier-dialog';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { DeleteSupplierDialog } from './components/delete-supplier-dialog';
 import { EditSupplierDialog } from './components/edit-supplier-dialog';
 import { useAdmin } from '@/hooks/use-admin';
+import { InitiateReturnDialog } from './components/initiate-return-dialog';
 
 export default function SuppliersPage() {
   const firestore = useFirestore();
   const { isAdmin } = useAdmin();
   const [isAddDialogOpen, setAddDialogOpen] = useState(false);
+  const [isReturnDialogOpen, setReturnDialogOpen] = useState(false);
+  const [selectedSupplierForAction, setSelectedSupplierForAction] = useState<Supplier | null>(null);
+
 
   const suppliersQuery = useMemoFirebase(
     () => (firestore ? collection(firestore, 'suppliers') : null),
     [firestore]
   );
   const { data: suppliers } = useCollection<Supplier>(suppliersQuery);
+
+  const batchesQuery = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'batches') : null),
+    [firestore]
+  );
+  const { data: batches } = useCollection<Batch>(batchesQuery);
+  
+  const expiringBatchesBySupplier = useMemo(() => {
+    if (!batches) return new Map<string, Batch[]>();
+    const mapping = new Map<string, Batch[]>();
+    const today = new Date();
+    const thirtyDaysFromNow = new Date();
+    thirtyDaysFromNow.setDate(today.getDate() + 30);
+
+    batches.forEach(batch => {
+        const expiryDate = new Date(batch.expiryDate);
+        if (expiryDate <= thirtyDaysFromNow && batch.supplierId) {
+            if (!mapping.has(batch.supplierId)) {
+                mapping.set(batch.supplierId, []);
+            }
+            mapping.get(batch.supplierId)!.push(batch);
+        }
+    });
+    return mapping;
+  }, [batches]);
+
+  const suppliersWithExpiringBatches = useMemo(() => new Set(expiringBatchesBySupplier.keys()), [expiringBatchesBySupplier]);
 
   const {
     columns,
@@ -31,7 +62,15 @@ export default function SuppliersPage() {
     isDeleteOpen,
     setDeleteOpen,
     selectedSupplier,
-  } = Columns();
+  } = Columns({ 
+    suppliersWithExpiringBatches, 
+    onInitiateReturn: (supplier) => {
+      setSelectedSupplierForAction(supplier);
+      setReturnDialogOpen(true);
+    }
+  });
+
+  const activeSupplier = selectedSupplier || selectedSupplierForAction;
 
   return (
     <div className="flex min-h-screen w-full flex-col">
@@ -54,18 +93,24 @@ export default function SuppliersPage() {
 
         <SuppliersDataTable columns={columns} data={suppliers || []} />
 
-        {selectedSupplier && (
+        {activeSupplier && (
           <>
             <EditSupplierDialog
               isOpen={isEditOpen}
               onOpenChange={setEditOpen}
-              supplier={selectedSupplier}
+              supplier={activeSupplier}
             />
             <DeleteSupplierDialog
               isOpen={isDeleteOpen}
               onOpenChange={setDeleteOpen}
-              supplierId={selectedSupplier.id}
-              supplierName={selectedSupplier.name}
+              supplierId={activeSupplier.id}
+              supplierName={activeSupplier.name}
+            />
+            <InitiateReturnDialog
+              isOpen={isReturnDialogOpen}
+              onOpenChange={setReturnDialogOpen}
+              supplier={activeSupplier}
+              expiringBatches={expiringBatchesBySupplier.get(activeSupplier.id) || []}
             />
           </>
         )}

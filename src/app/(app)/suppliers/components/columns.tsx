@@ -14,7 +14,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useState } from 'react';
 
-export const Columns = () => {
+type ColumnsProps = {
+  suppliersWithExpiringBatches: Set<string>;
+  onInitiateReturn: (supplier: Supplier) => void;
+};
+
+export const Columns = ({ suppliersWithExpiringBatches, onInitiateReturn }: ColumnsProps) => {
   const [isEditOpen, setEditOpen] = useState(false);
   const [isDeleteOpen, setDeleteOpen] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
@@ -23,6 +28,21 @@ export const Columns = () => {
     {
       accessorKey: 'name',
       header: 'Name',
+      cell: ({ row }) => {
+        const supplier = row.original;
+        const hasExpiringBatches = suppliersWithExpiringBatches.has(supplier.id);
+        return (
+          <div className="flex items-center gap-2">
+            {hasExpiringBatches && (
+              <div
+                className="h-2 w-2 rounded-full bg-destructive"
+                title="This supplier has items that are expiring soon."
+              />
+            )}
+            <span>{supplier.name}</span>
+          </div>
+        );
+      },
     },
     {
       accessorKey: 'contactPerson',
@@ -48,6 +68,7 @@ export const Columns = () => {
       id: 'actions',
       cell: ({ row }) => {
         const supplier = row.original;
+        const hasExpiringBatches = suppliersWithExpiringBatches.has(supplier.id);
   
         return (
           <DropdownMenu>
@@ -66,6 +87,12 @@ export const Columns = () => {
                 }}
               >
                 Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => onInitiateReturn(supplier)}
+                disabled={!hasExpiringBatches}
+              >
+                Initiate Return
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
