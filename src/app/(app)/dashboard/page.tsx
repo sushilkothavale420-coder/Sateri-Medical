@@ -1,3 +1,5 @@
+'use client';
+
 import { Header } from "@/components/header";
 import {
   Card,
@@ -18,11 +20,68 @@ import {
   AlertTriangle,
   Boxes,
   PackageCheck,
-  DollarSign
+  DollarSign,
+  TrendingUp
 } from "lucide-react";
 import { SalesChart } from "./components/sales-chart";
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { collectionGroup, query, orderBy, limit, collection } from "firebase/firestore";
+import { Sale, SaleItem, Customer } from "@/lib/types";
+import { use, useEffect, useState } from "react";
 
 export default function DashboardPage() {
+  const firestore = useFirestore();
+  const [customerNames, setCustomerNames] = useState<Record<string, string>>({});
+
+  const saleItemsQuery = useMemoFirebase(
+    () => (firestore ? query(collectionGroup(firestore, 'items')) : null),
+    [firestore]
+  );
+  const { data: saleItems } = useCollection<SaleItem>(saleItemsQuery);
+
+  const recentSalesQuery = useMemoFirebase(
+    () => (firestore ? query(collection(firestore, 'sales'), orderBy('saleDate', 'desc'), limit(5)) : null),
+    [firestore]
+  );
+  const { data: recentSales } = useCollection<Sale>(recentSalesQuery);
+
+  const customersQuery = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'customers') : null),
+    [firestore]
+  );
+  const { data: customers } = useCollection<Customer>(customersQuery);
+
+  useEffect(() => {
+    if (customers) {
+      const names = customers.reduce((acc, customer) => {
+        acc[customer.id] = customer.name;
+        return acc;
+      }, {} as Record<string, string>);
+      setCustomerNames(names);
+    }
+  }, [customers]);
+
+  const { totalRevenue, totalProfit, totalSales } = useMemo(() => {
+    if (!saleItems) {
+      return { totalRevenue: 0, totalProfit: 0, totalSales: 0 };
+    }
+    const revenue = saleItems.reduce((acc, item) => acc + item.itemTotalWithTax, 0);
+    const profit = saleItems.reduce((acc, item) => {
+      const itemProfit = (item.unitSellingPrice - (item.purchasePriceAtSale || 0)) * item.quantitySold;
+      return acc + itemProfit;
+    }, 0);
+    return { 
+      totalRevenue: revenue, 
+      totalProfit: profit,
+      totalSales: recentSales?.length || 0
+    };
+  }, [saleItems, recentSales]);
+  
+  const formatCurrency = (amount: number) => new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+  }).format(amount);
+
 
   return (
     <div className="flex min-h-screen w-full flex-col">
@@ -35,23 +94,21 @@ export default function DashboardPage() {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">₹0.00</div>
+              <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
               <p className="text-xs text-muted-foreground">
-                No sales data available
+                Total revenue from all sales
               </p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Low Stock Items
-              </CardTitle>
-              <Boxes className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Net Profit</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
+              <div className="text-2xl font-bold">{formatCurrency(totalProfit)}</div>
               <p className="text-xs text-muted-foreground">
-                Items needing reorder
+                Estimated profit from all sales
               </p>
             </CardContent>
           </Card>
@@ -77,9 +134,9 @@ export default function DashboardPage() {
               <PackageCheck className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
+              <div className="text-2xl font-bold">{totalSales}</div>
               <p className="text-xs text-muted-foreground">
-                No sales data available
+                Total sales transactions recorded
               </p>
             </CardContent>
           </Card>
@@ -100,7 +157,7 @@ export default function DashboardPage() {
             <CardHeader>
               <CardTitle className="font-headline">Recent Sales</CardTitle>
               <CardDescription>
-                You made 0 sales this month.
+                Your 5 most recent sales transactions.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -112,11 +169,22 @@ export default function DashboardPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  <TableRow>
-                    <TableCell colSpan={2} className="text-center">
-                      No recent sales.
-                    </TableCell>
-                  </TableRow>
+                  {recentSales && recentSales.length > 0 ? (
+                    recentSales.map(sale => (
+                      <TableRow key={sale.id}>
+                        <TableCell>
+                          <div className="font-medium">{sale.customerId ? customerNames[sale.customerId] || 'Walk-in' : 'Walk-in'}</div>
+                        </TableCell>
+                        <TableCell className="text-right">{formatCurrency(sale.totalAmountDue)}</TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={2} className="text-center">
+                        No recent sales.
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </CardContent>

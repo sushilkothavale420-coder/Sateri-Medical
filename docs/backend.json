@@ -101,6 +101,10 @@
           "type": "string",
           "description": "Physical location or storage box identifier within the store (e.g., 'Shelf A-1', 'Drawer 3')."
         },
+        "basePurchasePrice": {
+          "type": "number",
+          "description": "The standard purchase price per smallest unit of the medicine."
+        },
         "baseSellingPrice": {
           "type": "number",
           "description": "The standard selling price per smallest unit of the medicine."
@@ -147,6 +151,7 @@
         "compositionId",
         "category",
         "company",
+        "basePurchasePrice",
         "baseSellingPrice",
         "smallestUnitName",
         "unitsPerBulk",
@@ -592,6 +597,10 @@
         "unitSellingPrice": {
           "type": "number",
           "description": "The selling price per smallest unit of medicine at the time of sale."
+        },
+        "purchasePriceAtSale": {
+          "type": "number",
+          "description": "The purchase price per smallest unit from the batch at the time of sale, used for profit calculation."
         },
         "gstRateApplied": {
           "type": "number",

@@ -46,6 +46,7 @@ export function AddMedicineDialog({ children, isOpen, onOpenChange }: AddMedicin
       composition: '',
       category: '',
       company: '',
+      basePurchasePrice: 0,
       baseSellingPrice: 0,
       smallestUnitName: 'tablet',
       unitsPerBulk: 10,
@@ -140,29 +141,45 @@ export function AddMedicineDialog({ children, isOpen, onOpenChange }: AddMedicin
                 )}
               />
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-               <FormField
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
                 control={form.control}
-                name="baseSellingPrice"
+                name="basePurchasePrice"
                 render={({ field }) => (
-                  <FormItem className="md:col-span-2">
-                    <FormLabel>Selling Price (per smallest unit)</FormLabel>
+                  <FormItem>
+                    <FormLabel>Purchase Price (per smallest unit)</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" placeholder="e.g. 2.50" {...field} />
+                      <Input type="number" step="0.01" placeholder="e.g. 1.80" {...field} value={field.value ?? ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+              <FormField
+                control={form.control}
+                name="baseSellingPrice"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Selling Price (per smallest unit)</FormLabel>
+                    <FormControl>
+                      <Input type="number" step="0.01" placeholder="e.g. 2.50" {...field} value={field.value ?? ''} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
                <FormField
                 control={form.control}
                 name="smallestUnitName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Smallest Unit</FormLabel>
+                    <FormLabel>Smallest Unit Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. tablet" {...field} />
+                      <Input placeholder="e.g. tablet, capsule" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -175,7 +192,7 @@ export function AddMedicineDialog({ children, isOpen, onOpenChange }: AddMedicin
                   <FormItem>
                     <FormLabel>GST (%)</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" placeholder="e.g. 5" {...field} />
+                      <Input type="number" step="0.01" placeholder="e.g. 5" {...field} value={field.value ?? ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -189,9 +206,9 @@ export function AddMedicineDialog({ children, isOpen, onOpenChange }: AddMedicin
                 name="unitsPerBulk"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Units per Bulk</FormLabel>
+                    <FormLabel>Units per Bulk (e.g. tablets per strip)</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="e.g. 10" {...field} />
+                      <Input type="number" placeholder="e.g. 10" {...field} value={field.value ?? ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -202,7 +219,7 @@ export function AddMedicineDialog({ children, isOpen, onOpenChange }: AddMedicin
                 name="bulkUnitName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Bulk Unit Name</FormLabel>
+                    <FormLabel>Bulk Unit Name (e.g. strip, box)</FormLabel>
                     <FormControl>
                       <Input placeholder="e.g. strip" {...field} />
                     </FormControl>
@@ -215,9 +232,9 @@ export function AddMedicineDialog({ children, isOpen, onOpenChange }: AddMedicin
                 name="reorderPoint"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Re-order Point</FormLabel>
+                    <FormLabel>Re-order Point (in smallest units)</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="e.g. 20" {...field} />
+                      <Input type="number" placeholder="e.g. 20" {...field} value={field.value ?? ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

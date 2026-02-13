@@ -5,7 +5,8 @@ export const medicineSchema = z.object({
   composition: z.string().min(1, "Composition is required."),
   category: z.string().min(1, "Category is required."),
   company: z.string().min(1, "Company is required."),
-  baseSellingPrice: z.coerce.number().min(0, "Price must be a non-negative number."),
+  basePurchasePrice: z.coerce.number().min(0, "Purchase price must be a non-negative number."),
+  baseSellingPrice: z.coerce.number().min(0, "Selling price must be a non-negative number."),
   smallestUnitName: z.string().min(1, "Smallest unit name is required (e.g., tablet, capsule, ml)."),
   unitsPerBulk: z.coerce.number().min(1, "Units per bulk must be at least 1."),
   bulkUnitName: z.string().min(1, "Bulk unit name is required (e.g., strip, box, bottle)."),
@@ -47,4 +48,41 @@ export type Customer = z.infer<typeof customerSchema> & {
   debtAmount: number;
   createdAt: string;
   updatedAt: string;
+};
+
+export const saleSchema = z.object({
+  saleDate: z.string(),
+  customerId: z.string().optional(),
+  totalAmountBeforeTax: z.number(),
+  totalTaxAmount: z.number(),
+  totalAmountDue: z.number(),
+  amountPaid: z.number(),
+  balanceDue: z.number(),
+  paymentMethod: z.string(),
+  invoiceNumber: z.string(),
+  createdByUserId: z.string(),
+});
+
+export type Sale = z.infer<typeof saleSchema> & {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export const saleItemSchema = z.object({
+  saleId: z.string(),
+  medicineId: z.string(),
+  batchId: z.string(),
+  quantitySold: z.number(),
+  unitSellingPrice: z.number(),
+  purchasePriceAtSale: z.number().optional(),
+  gstRateApplied: z.number(),
+  itemTotalBeforeTax: z.number(),
+  itemTaxAmount: z.number(),
+  itemTotalWithTax: z.number(),
+});
+
+export type SaleItem = z.infer<typeof saleItemSchema> & {
+  id: string;
+  createdAt: string;
 };
