@@ -2,7 +2,7 @@
 
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/app-sidebar';
-import { useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useUser, useCollection, useFirestore, useMemoFirebase, useAuth } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo } from 'react';
 import { Header } from '@/components/header';
@@ -19,6 +19,7 @@ export default function AppLayout({
   const { isAdmin, isLoading: isAdminLoading } = useAdmin();
   const router = useRouter();
   const firestore = useFirestore();
+  const auth = useAuth();
 
   const batchesQuery = useMemoFirebase(
     () => (firestore ? collection(firestore, 'batches') : null),
@@ -45,11 +46,12 @@ export default function AppLayout({
       if (!user) {
         router.push('/login');
       } else if (!isAdmin) {
-        // If user is logged in but not an admin, deny access.
+        // If user is logged in but not an admin, sign them out and deny access.
+        auth.signOut();
         router.push('/login');
       }
     }
-  }, [user, isUserLoading, isAdmin, isAdminLoading, router]);
+  }, [user, isUserLoading, isAdmin, isAdminLoading, router, auth]);
 
   const isLoading = isUserLoading || isAdminLoading;
 
