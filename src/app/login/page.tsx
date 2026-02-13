@@ -17,6 +17,7 @@ import { useUser } from '@/firebase';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { FirebaseError } from 'firebase/app';
+import { useAdmin } from '@/hooks/use-admin';
 
 export default function LoginPage() {
   const [loginEmail, setLoginEmail] = useState('');
@@ -24,21 +25,23 @@ export default function LoginPage() {
   const auth = useAuth();
   const router = useRouter();
   const { user, isUserLoading } = useUser();
+  const { isAdmin, isLoading: isAdminLoading } = useAdmin();
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!isUserLoading && user) {
+    // Only redirect if the user is a confirmed Admin.
+    if (!isAdminLoading && isAdmin) {
       router.push('/dashboard');
     }
-  }, [user, isUserLoading, router]);
+  }, [isAdmin, isAdminLoading, router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!auth) return;
     try {
       await initiateEmailSignIn(auth, loginEmail, loginPassword);
-      // On successful login, the onAuthStateChanged listener in the
-      // layout will handle the redirect to the dashboard.
+      // On successful login, the useEffect above will handle the redirect if the user is an admin.
+      // The AppLayout will handle redirection if they are not.
     } catch (error) {
       let title = 'Login Failed';
       let description = 'An unexpected error occurred. Please try again.';
@@ -68,11 +71,33 @@ export default function LoginPage() {
     }
   };
 
-  if (isUserLoading) {
+  const isLoading = isUserLoading || isAdminLoading;
+  if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div>Loading...</div>
       </div>
+    );
+  }
+
+  // If a user is logged in but not an admin, show an access denied message.
+  if (user && !isAdmin && !isAdminLoading) {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-background">
+        <div className="w-full max-w-md text-center">
+          <Card>
+            <CardHeader>
+              <CardTitle>Access Denied</CardTitle>
+              <CardDescription>
+                You do not have permission to access the admin dashboard.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button onClick={() => auth.signOut()}>Logout</Button>
+            </CardContent>
+          </Card>
+        </div>
+      </main>
     );
   }
 
