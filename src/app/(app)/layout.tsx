@@ -55,7 +55,7 @@ export default function AppLayout({
 
   const isLoading = isUserLoading || isAdminLoading;
 
-  if (isLoading || !user || !isAdmin) {
+  if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div>Loading...</div>

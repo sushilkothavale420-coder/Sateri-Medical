@@ -15,14 +15,14 @@ import { useAdmin } from '@/hooks/use-admin';
 
 export default function MedicinesPage() {
   const firestore = useFirestore();
-  const { isAdmin, isLoading: isAdminLoading } = useAdmin();
+  const { isAdmin } = useAdmin();
   const [isAddDialogOpen, setAddDialogOpen] = useState(false);
   
   const medicinesQuery = useMemoFirebase(
     () => (firestore ? collection(firestore, 'medicines') : null),
     [firestore]
   );
-  const { data: medicines, isLoading: areMedicinesLoading } = useCollection<Medicine>(medicinesQuery);
+  const { data: medicines } = useCollection<Medicine>(medicinesQuery);
 
   const { 
     columns, 
@@ -33,7 +33,6 @@ export default function MedicinesPage() {
     selectedMedicine 
   } = Columns();
   
-  const isLoading = areMedicinesLoading || isAdminLoading;
 
   return (
     <div className="flex min-h-screen w-full flex-col">
@@ -54,11 +53,7 @@ export default function MedicinesPage() {
           )}
         </div>
         
-        {isLoading ? (
-            <p>Loading medicines...</p>
-        ) : (
-            <MedicinesDataTable columns={columns} data={medicines || []} />
-        )}
+        <MedicinesDataTable columns={columns} data={medicines || []} />
 
         {selectedMedicine && (
           <>

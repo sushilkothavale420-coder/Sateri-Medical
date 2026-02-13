@@ -32,10 +32,10 @@ export function PosTerminal() {
   const { toast } = useToast();
 
   const medicinesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'medicines') : null, [firestore]);
-  const { data: medicines, isLoading: isLoadingMedicines } = useCollection<Medicine>(medicinesQuery);
+  const { data: medicines } = useCollection<Medicine>(medicinesQuery);
 
   const customersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'customers') : null, [firestore]);
-  const { data: customers, isLoading: isLoadingCustomers } = useCollection<Customer>(customersQuery);
+  const { data: customers } = useCollection<Customer>(customersQuery);
 
   const [cart, setCart] = useState<CartItem[]>([]);
   
@@ -198,7 +198,7 @@ export function PosTerminal() {
                           variant="outline"
                           role="combobox"
                           className={cn("w-full justify-between", !selectedMedicine && "text-muted-foreground")}
-                          disabled={isLoadingMedicines}
+                          disabled={!medicines}
                         >
                           {selectedMedicine ? selectedMedicine.name : "Select medicine"}
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -208,7 +208,7 @@ export function PosTerminal() {
                       <Command>
                         <CommandInput placeholder="Search medicine..." />
                         <CommandList>
-                          <CommandEmpty>{isLoadingMedicines ? 'Loading medicines...' : 'No medicine found.'}</CommandEmpty>
+                          <CommandEmpty>{!medicines ? 'Loading medicines...' : 'No medicine found.'}</CommandEmpty>
                           <CommandGroup>
                             {medicines && medicines.map((med) => (
                               <CommandItem
@@ -311,7 +311,7 @@ export function PosTerminal() {
                         variant="outline"
                         role="combobox"
                         className={cn("w-full justify-between", !selectedCustomer && "text-muted-foreground")}
-                         disabled={isLoadingCustomers}
+                         disabled={!customers}
                       >
                         {selectedCustomer ? selectedCustomer.name : "Select customer (optional)"}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -321,7 +321,7 @@ export function PosTerminal() {
                     <Command>
                       <CommandInput placeholder="Search customer..." />
                       <CommandList>
-                        <CommandEmpty>{isLoadingCustomers ? 'Loading customers...' : 'No customer found.'}</CommandEmpty>
+                        <CommandEmpty>{!customers ? 'Loading customers...' : 'No customer found.'}</CommandEmpty>
                         <CommandGroup>
                           {customers && customers.map((cust) => (
                             <CommandItem

@@ -35,7 +35,7 @@ export default function StockManagementPage() {
     () => (firestore ? collection(firestore, 'medicines') : null),
     [firestore]
   );
-  const { data: medicines, isLoading: isLoadingMedicines } = useCollection<Medicine>(medicinesQuery);
+  const { data: medicines } = useCollection<Medicine>(medicinesQuery);
 
 
   const form = useForm<StockEntryFormValues>({
@@ -132,7 +132,7 @@ export default function StockManagementPage() {
                                     <Button
                                       variant="outline"
                                       role="combobox"
-                                      disabled={isLoadingMedicines}
+                                      disabled={!medicines}
                                       className={cn(
                                         "w-full justify-between",
                                         !field.value && "text-muted-foreground"

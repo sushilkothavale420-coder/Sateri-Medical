@@ -12,9 +12,9 @@ export function useAdmin() {
         [firestore, user]
     );
 
-    const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userProfileRef);
+    const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
 
-    const isLoading = isAuthLoading || isProfileLoading;
+    const isLoading = isAuthLoading;
     const isAdmin = !isLoading && userProfile?.role === 'Admin';
 
     return { isAdmin, isLoading };

@@ -15,14 +15,14 @@ import { useAdmin } from '@/hooks/use-admin';
 
 export default function CustomersPage() {
   const firestore = useFirestore();
-  const { isAdmin, isLoading: isAdminLoading } = useAdmin();
+  const { isAdmin } = useAdmin();
   const [isAddDialogOpen, setAddDialogOpen] = useState(false);
   
   const customersQuery = useMemoFirebase(
     () => (firestore ? collection(firestore, 'customers') : null),
     [firestore]
   );
-  const { data: customers, isLoading: areCustomersLoading } = useCollection<Customer>(customersQuery);
+  const { data: customers } = useCollection<Customer>(customersQuery);
 
   const { 
     columns, 
@@ -32,8 +32,6 @@ export default function CustomersPage() {
     setDeleteOpen, 
     selectedCustomer
   } = Columns();
-
-  const isLoading = areCustomersLoading || isAdminLoading;
 
   return (
     <div className="flex min-h-screen w-full flex-col">
@@ -54,11 +52,7 @@ export default function CustomersPage() {
           )}
         </div>
         
-        {isLoading ? (
-            <p>Loading customers...</p>
-        ) : (
-          <CustomersDataTable columns={columns} data={customers || []} />
-        )}
+        <CustomersDataTable columns={columns} data={customers || []} />
 
         {selectedCustomer && (
           <>

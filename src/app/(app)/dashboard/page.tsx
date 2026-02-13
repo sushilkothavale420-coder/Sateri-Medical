@@ -51,15 +51,13 @@ export default function DashboardPage() {
     },
     [firestore, user]
   );
-  const { data: recentSales, isLoading: isLoadingRecentSales } =
-    useCollection<Sale>(recentSalesQuery);
+  const { data: recentSales } = useCollection<Sale>(recentSalesQuery);
 
   const customersQuery = useMemoFirebase(
     () => (firestore ? collection(firestore, 'customers') : null),
     [firestore]
   );
-  const { data: customers, isLoading: isLoadingCustomers } =
-    useCollection<Customer>(customersQuery);
+  const { data: customers } = useCollection<Customer>(customersQuery);
 
   const saleItemsQuery = useMemoFirebase(
     () => {
@@ -68,21 +66,13 @@ export default function DashboardPage() {
     },
     [firestore, user]
   );
-  const { data: saleItems, isLoading: isLoadingSaleItems } =
-    useCollection<SaleItem>(saleItemsQuery);
+  const { data: saleItems } = useCollection<SaleItem>(saleItemsQuery);
   
   const batchesQuery = useMemoFirebase(
     () => (firestore ? collection(firestore, 'batches') : null),
     [firestore]
   );
-  const { data: batches, isLoading: isLoadingBatches } =
-    useCollection<Batch>(batchesQuery);
-
-  const isLoading =
-    isLoadingRecentSales ||
-    isLoadingCustomers ||
-    isLoadingSaleItems ||
-    isLoadingBatches;
+  const { data: batches } = useCollection<Batch>(batchesQuery);
 
   useEffect(() => {
     if (customers) {
@@ -176,129 +166,125 @@ export default function DashboardPage() {
     <div className="flex min-h-screen w-full flex-col">
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-background">
         <h1 className="text-lg font-semibold md:text-2xl">Dashboard</h1>
-        {isLoading ? (
-          <p>Loading dashboard...</p>
-        ) : (
-          <>
-            <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Total Revenue
-                  </CardTitle>
-                  <DollarSign className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {formatCurrency(totalRevenue)}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Total revenue from all sales
-                  </p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Net Profit
-                  </CardTitle>
-                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {formatCurrency(totalProfit)}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Estimated profit from all sales
-                  </p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Expiring Soon
-                  </CardTitle>
-                  <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{expiringSoonCount}</div>
-                  <p className="text-xs text-muted-foreground">
-                    Items expiring in the next 30 days
-                  </p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Total Sales
-                  </CardTitle>
-                  <PackageCheck className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{saleItems?.length}</div>
-                  <p className="text-xs text-muted-foreground">
-                    Total items sold across all sales
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-            <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
-              <Card className="xl:col-span-2">
-                <CardHeader>
-                  <CardTitle className="font-headline">Sales Overview</CardTitle>
-                  <CardDescription>
-                    Your sales performance for the last 6 months.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="pl-2">
-                  <SalesChart data={salesChartData} />
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="font-headline">Recent Sales</CardTitle>
-                  <CardDescription>
-                    Your 5 most recent sales transactions.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Customer</TableHead>
-                        <TableHead className="text-right">Amount</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {recentSales && recentSales.length > 0 ? (
-                        recentSales.map(sale => (
-                          <TableRow key={sale.id}>
-                            <TableCell>
-                              <div className="font-medium">
-                                {sale.customerId
-                                  ? customerNames[sale.customerId] || 'Walk-in'
-                                  : 'Walk-in'}
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-right">
-                              {formatCurrency(sale.totalAmountDue)}
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell colSpan={2} className="text-center">
-                            No recent sales.
+        <>
+          <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Total Revenue
+                </CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {formatCurrency(totalRevenue)}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Total revenue from all sales
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Net Profit
+                </CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {formatCurrency(totalProfit)}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Estimated profit from all sales
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Expiring Soon
+                </CardTitle>
+                <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{expiringSoonCount}</div>
+                <p className="text-xs text-muted-foreground">
+                  Items expiring in the next 30 days
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Total Sales
+                </CardTitle>
+                <PackageCheck className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{saleItems?.length || 0}</div>
+                <p className="text-xs text-muted-foreground">
+                  Total items sold across all sales
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+          <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
+            <Card className="xl:col-span-2">
+              <CardHeader>
+                <CardTitle className="font-headline">Sales Overview</CardTitle>
+                <CardDescription>
+                  Your sales performance for the last 6 months.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pl-2">
+                <SalesChart data={salesChartData} />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle className="font-headline">Recent Sales</CardTitle>
+                <CardDescription>
+                  Your 5 most recent sales transactions.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Customer</TableHead>
+                      <TableHead className="text-right">Amount</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {recentSales && recentSales.length > 0 ? (
+                      recentSales.map(sale => (
+                        <TableRow key={sale.id}>
+                          <TableCell>
+                            <div className="font-medium">
+                              {sale.customerId
+                                ? customerNames[sale.customerId] || 'Walk-in'
+                                : 'Walk-in'}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {formatCurrency(sale.totalAmountDue)}
                           </TableCell>
                         </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </div>
-          </>
-        )}
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={2} className="text-center">
+                          No recent sales.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </div>
+        </>
       </main>
     </div>
   );
