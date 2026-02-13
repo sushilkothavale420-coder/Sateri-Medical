@@ -6,6 +6,7 @@ import {
   DollarSign,
   PackageCheck,
   TrendingUp,
+  CircleHelp,
 } from 'lucide-react';
 import { collection, collectionGroup, limit, orderBy, query } from 'firebase/firestore';
 import { useEffect, useMemo, useState } from 'react';
@@ -121,6 +122,11 @@ export default function DashboardPage() {
     };
   }, [saleItems]);
 
+  const totalDebt = useMemo(() => {
+    if (!customers) return 0;
+    return customers.reduce((acc, customer) => acc + (customer.debtAmount || 0), 0);
+  }, [customers]);
+
   const salesChartData = useMemo(() => {
     if (!saleItems) return [];
 
@@ -197,6 +203,22 @@ export default function DashboardPage() {
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Estimated profit from all sales
+                </p>
+              </CardContent>
+            </Card>
+             <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Total Credit (Udhar)
+                </CardTitle>
+                <CircleHelp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {formatCurrency(totalDebt)}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Total outstanding from all customers
                 </p>
               </CardContent>
             </Card>
