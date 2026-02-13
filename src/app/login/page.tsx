@@ -24,12 +24,13 @@ export default function LoginPage() {
   const [loginPassword, setLoginPassword] = useState('');
   const auth = useAuth();
   const router = useRouter();
-  const { isUserLoading } = useUser();
+  const { user, isUserLoading } = useUser();
   const { isAdmin, isLoading: isAdminLoading } = useAdmin();
   const { toast } = useToast();
 
   useEffect(() => {
-    // Only redirect if the user is a confirmed Admin.
+    // This effect is for redirecting an already logged-in admin
+    // who lands on the login page.
     if (!isAdminLoading && isAdmin) {
       router.push('/dashboard');
     }
@@ -40,8 +41,8 @@ export default function LoginPage() {
     if (!auth) return;
     try {
       await initiateEmailSignIn(auth, loginEmail, loginPassword);
-      // On successful login, the useEffect above will handle the redirect if the user is an admin.
-      // The AppLayout will handle redirection for non-admins.
+      // Explicitly redirect on successful login.
+      router.push('/dashboard');
     } catch (error) {
       let title = 'Login Failed';
       let description = 'An unexpected error occurred. Please try again.';
@@ -72,7 +73,10 @@ export default function LoginPage() {
   };
 
   const isLoading = isUserLoading || isAdminLoading;
-  if (isLoading) {
+  
+  // If the user state is loading, or if the user is already a logged-in admin, show loading.
+  // This prevents the login form from flashing for an already authenticated admin.
+  if (isLoading || (!isUserLoading && isAdmin)) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div>Loading...</div>
@@ -88,7 +92,7 @@ export default function LoginPage() {
           </Button>
        </div>
       <div className="w-full max-w-md">
-        <h1 className="text-4xl font-headline text-center mb-6">Sateri Medical</h1>
+        <h1 className="text-4xl font-semibold text-center mb-6">Sateri Medical</h1>
         <Card>
           <CardHeader>
             <CardTitle>Login</CardTitle>

@@ -16,11 +16,6 @@ export default {
       },
     },
     extend: {
-      fontFamily: {
-        headline: ['Belleza', 'serif'],
-        body: ['Alegreya', 'serif'],
-        code: ['monospace'],
-      },
       colors: {
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',

@@ -43,7 +43,7 @@ export function AppSidebar() {
     <Sidebar collapsible="offcanvas">
       <SidebarHeader>
         <div className="flex items-center gap-2">
-          <h1 className="text-xl font-headline font-semibold text-sidebar-foreground">
+          <h1 className="text-xl font-semibold text-sidebar-foreground">
             Sateri Medical
           </h1>
         </div>

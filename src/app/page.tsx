@@ -87,7 +87,7 @@ export default function HomePage() {
         </div>
 
         <div className="text-center">
-            <h1 className="text-5xl font-headline text-primary mb-4">
+            <h1 className="text-5xl font-semibold text-primary mb-4">
             Welcome to Sateri Medical
             </h1>
             <p className="text-lg text-muted-foreground mb-12">

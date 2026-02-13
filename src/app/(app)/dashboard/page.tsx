@@ -232,7 +232,7 @@ export default function DashboardPage() {
           <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
             <Card className="xl:col-span-2">
               <CardHeader>
-                <CardTitle className="font-headline">Sales Overview</CardTitle>
+                <CardTitle>Sales Overview</CardTitle>
                 <CardDescription>
                   Your sales performance for the last 6 months.
                 </CardDescription>
@@ -243,7 +243,7 @@ export default function DashboardPage() {
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle className="font-headline">Recent Sales</CardTitle>
+                <CardTitle>Recent Sales</CardTitle>
                 <CardDescription>
                   Your 5 most recent sales transactions.
                 </CardDescription>
