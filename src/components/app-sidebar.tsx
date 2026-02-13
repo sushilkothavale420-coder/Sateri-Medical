@@ -16,7 +16,6 @@ import {
   ShoppingBag,
   Users,
   BarChart2,
-  Settings,
   LogOut,
   Handshake,
   Warehouse,
@@ -69,14 +68,6 @@ export function AppSidebar() {
       <SidebarSeparator />
       <SidebarFooter>
         <SidebarMenu>
-          <SidebarMenuItem>
-             <SidebarMenuButton asChild tooltip={{ children: 'Settings' }}>
-                <Link href="/settings">
-                  <Settings />
-                  <span>Settings</span>
-                </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton onClick={() => auth.signOut()} tooltip={{ children: 'Logout' }}>
               <LogOut />
