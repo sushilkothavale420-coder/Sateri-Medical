@@ -59,14 +59,6 @@ export const Columns = () => {
         header: 'Company',
     },
     {
-        accessorKey: 'unitsPerBulk',
-        header: 'Packing',
-        cell: ({ row }) => {
-            const medicine = row.original;
-            return <div>{`${medicine.unitsPerBulk} ${medicine.smallestUnitName}s / ${medicine.bulkUnitName}`}</div>
-        }
-    },
-    {
       accessorKey: 'baseSellingPrice',
       header: () => <div className="text-right">Unit Price</div>,
       cell: ({ row }) => {

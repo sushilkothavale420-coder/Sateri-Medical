@@ -48,11 +48,8 @@ export function AddMedicineDialog({ children, isOpen, onOpenChange }: AddMedicin
       company: '',
       basePurchasePrice: undefined,
       baseSellingPrice: undefined,
-      smallestUnitName: 'tablet',
-      unitsPerBulk: 10,
-      bulkUnitName: 'strip',
-      reorderPoint: 10,
-      taxRateGst: 5,
+      reorderPoint: undefined,
+      taxRateGst: undefined,
     },
   });
 
@@ -148,7 +145,7 @@ export function AddMedicineDialog({ children, isOpen, onOpenChange }: AddMedicin
                 name="basePurchasePrice"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Purchase Price (per smallest unit)</FormLabel>
+                    <FormLabel>Purchase Price</FormLabel>
                     <FormControl>
                       <Input type="number" step="0.01" placeholder="e.g. 1.80" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} value={Number.isFinite(field.value) ? field.value : ''} />
                     </FormControl>
@@ -161,7 +158,7 @@ export function AddMedicineDialog({ children, isOpen, onOpenChange }: AddMedicin
                 name="baseSellingPrice"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Selling Price (per smallest unit)</FormLabel>
+                    <FormLabel>Selling Price</FormLabel>
                     <FormControl>
                       <Input type="number" step="0.01" placeholder="e.g. 2.50" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} value={Number.isFinite(field.value) ? field.value : ''} />
                     </FormControl>
@@ -174,19 +171,6 @@ export function AddMedicineDialog({ children, isOpen, onOpenChange }: AddMedicin
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
                <FormField
                 control={form.control}
-                name="smallestUnitName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Smallest Unit Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g. tablet, capsule" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-                 <FormField
-                control={form.control}
                 name="taxRateGst"
                 render={({ field }) => (
                   <FormItem>
@@ -198,41 +182,12 @@ export function AddMedicineDialog({ children, isOpen, onOpenChange }: AddMedicin
                   </FormItem>
                 )}
               />
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-              <FormField
-                control={form.control}
-                name="unitsPerBulk"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Units per Bulk (e.g. tablets per strip)</FormLabel>
-                    <FormControl>
-                      <Input type="number" placeholder="e.g. 10" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} value={Number.isFinite(field.value) ? field.value : ''} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="bulkUnitName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Bulk Unit Name (e.g. strip, box)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g. strip" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
               <FormField
                 control={form.control}
                 name="reorderPoint"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Re-order Point (in smallest units)</FormLabel>
+                    <FormLabel>Re-order Point</FormLabel>
                     <FormControl>
                       <Input type="number" placeholder="e.g. 20" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} value={Number.isFinite(field.value) ? field.value : ''} />
                     </FormControl>
