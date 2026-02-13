@@ -46,8 +46,8 @@ export function AddMedicineDialog({ children, isOpen, onOpenChange }: AddMedicin
       composition: '',
       category: '',
       company: '',
-      basePurchasePrice: 0,
-      baseSellingPrice: 0,
+      basePurchasePrice: undefined,
+      baseSellingPrice: undefined,
       smallestUnitName: 'tablet',
       unitsPerBulk: 10,
       bulkUnitName: 'strip',
@@ -150,7 +150,7 @@ export function AddMedicineDialog({ children, isOpen, onOpenChange }: AddMedicin
                   <FormItem>
                     <FormLabel>Purchase Price (per smallest unit)</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" placeholder="e.g. 1.80" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} value={field.value ?? ''} />
+                      <Input type="number" step="0.01" placeholder="e.g. 1.80" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} value={Number.isFinite(field.value) ? field.value : ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -163,7 +163,7 @@ export function AddMedicineDialog({ children, isOpen, onOpenChange }: AddMedicin
                   <FormItem>
                     <FormLabel>Selling Price (per smallest unit)</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" placeholder="e.g. 2.50" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} value={field.value ?? ''} />
+                      <Input type="number" step="0.01" placeholder="e.g. 2.50" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} value={Number.isFinite(field.value) ? field.value : ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -192,7 +192,7 @@ export function AddMedicineDialog({ children, isOpen, onOpenChange }: AddMedicin
                   <FormItem>
                     <FormLabel>GST (%)</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" placeholder="e.g. 5" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} value={field.value ?? ''} />
+                      <Input type="number" step="0.01" placeholder="e.g. 5" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} value={Number.isFinite(field.value) ? field.value : ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -208,7 +208,7 @@ export function AddMedicineDialog({ children, isOpen, onOpenChange }: AddMedicin
                   <FormItem>
                     <FormLabel>Units per Bulk (e.g. tablets per strip)</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="e.g. 10" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} value={field.value ?? ''} />
+                      <Input type="number" placeholder="e.g. 10" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} value={Number.isFinite(field.value) ? field.value : ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -234,7 +234,7 @@ export function AddMedicineDialog({ children, isOpen, onOpenChange }: AddMedicin
                   <FormItem>
                     <FormLabel>Re-order Point (in smallest units)</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="e.g. 20" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} value={field.value ?? ''} />
+                      <Input type="number" placeholder="e.g. 20" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} value={Number.isFinite(field.value) ? field.value : ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

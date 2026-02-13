@@ -45,37 +45,15 @@ export function EditMedicineDialog({
   const { toast } = useToast();
   const form = useForm<EditMedicineFormValues>({
     resolver: zodResolver(medicineSchema),
-    // Initialize form with defaultValues to prevent uncontrolled-to-controlled error
-    defaultValues: {
-      name: medicine?.name || '',
-      composition: medicine?.composition || '',
-      category: medicine?.category || '',
-      company: medicine?.company || '',
-      basePurchasePrice: medicine?.basePurchasePrice || 0,
-      baseSellingPrice: medicine?.baseSellingPrice || 0,
-      smallestUnitName: medicine?.smallestUnitName || '',
-      unitsPerBulk: medicine?.unitsPerBulk || 0,
-      bulkUnitName: medicine?.bulkUnitName || '',
-      reorderPoint: medicine?.reorderPoint ?? 0, // Fallback for optional number
-      taxRateGst: medicine?.taxRateGst ?? 0, // Fallback for optional number
-    }
+    defaultValues: medicine,
   });
 
   useEffect(() => {
-    // Reset form when a new medicine is passed or dialog is opened
     if (medicine && isOpen) {
       form.reset({
-        name: medicine.name,
-        composition: medicine.composition,
-        category: medicine.category,
-        company: medicine.company,
-        basePurchasePrice: medicine.basePurchasePrice,
-        baseSellingPrice: medicine.baseSellingPrice,
-        smallestUnitName: medicine.smallestUnitName,
-        unitsPerBulk: medicine.unitsPerBulk,
-        bulkUnitName: medicine.bulkUnitName,
-        reorderPoint: medicine.reorderPoint ?? 0,
-        taxRateGst: medicine.taxRateGst ?? 0,
+        ...medicine,
+        reorderPoint: medicine.reorderPoint ?? undefined,
+        taxRateGst: medicine.taxRateGst ?? undefined,
       });
     }
   }, [medicine, isOpen, form]);
@@ -171,7 +149,7 @@ export function EditMedicineDialog({
                   <FormItem>
                     <FormLabel>Purchase Price (per smallest unit)</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" placeholder="e.g. 1.80" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} value={field.value ?? ''} />
+                      <Input type="number" step="0.01" placeholder="e.g. 1.80" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} value={Number.isFinite(field.value) ? field.value : ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -184,7 +162,7 @@ export function EditMedicineDialog({
                   <FormItem>
                     <FormLabel>Selling Price (per smallest unit)</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" placeholder="e.g. 2.50" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} value={field.value ?? ''} />
+                      <Input type="number" step="0.01" placeholder="e.g. 2.50" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} value={Number.isFinite(field.value) ? field.value : ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -213,7 +191,7 @@ export function EditMedicineDialog({
                   <FormItem>
                     <FormLabel>GST (%)</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" placeholder="e.g. 5" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} value={field.value ?? ''} />
+                      <Input type="number" step="0.01" placeholder="e.g. 5" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} value={Number.isFinite(field.value) ? field.value : ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -229,7 +207,7 @@ export function EditMedicineDialog({
                   <FormItem>
                     <FormLabel>Units per Bulk (e.g. tablets per strip)</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="e.g. 10" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} value={field.value ?? ''} />
+                      <Input type="number" placeholder="e.g. 10" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} value={Number.isFinite(field.value) ? field.value : ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -255,7 +233,7 @@ export function EditMedicineDialog({
                   <FormItem>
                     <FormLabel>Re-order Point (in smallest units)</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="e.g. 20" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} value={field.value ?? ''} />
+                      <Input type="number" placeholder="e.g. 20" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} value={Number.isFinite(field.value) ? field.value : ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
