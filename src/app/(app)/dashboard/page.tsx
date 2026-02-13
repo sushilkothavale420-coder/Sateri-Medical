@@ -14,41 +14,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import {
   AlertTriangle,
-  ArrowDown,
-  ArrowUp,
   Boxes,
-  Clock,
-  DollarSign,
   PackageCheck,
+  DollarSign
 } from "lucide-react";
 import { SalesChart } from "./components/sales-chart";
-import { medicines, sales } from "@/lib/placeholder-data";
-import { differenceInDays, parseISO } from "date-fns";
 
 export default function DashboardPage() {
-  const expiringSoon = medicines.filter(
-    (m) =>
-      differenceInDays(parseISO(m.expiryDate), new Date()) <= 90 &&
-      differenceInDays(parseISO(m.expiryDate), new Date()) > 0
-  );
-  const expiringIn30 = expiringSoon.filter(
-    (m) => differenceInDays(parseISO(m.expiryDate), new Date()) <= 30
-  ).length;
-  const expiringIn60 = expiringSoon.filter(
-    (m) =>
-      differenceInDays(parseISO(m.expiryDate), new Date()) > 30 &&
-      differenceInDays(parseISO(m.expiryDate), new Date()) <= 60
-  ).length;
-  const expiringIn90 = expiringSoon.filter(
-    (m) =>
-      differenceInDays(parseISO(m.expiryDate), new Date()) > 60 &&
-      differenceInDays(parseISO(m.expiryDate), new Date()) <= 90
-  ).length;
-
-  const lowStock = medicines.filter((m) => m.quantity <= m.lowStockThreshold).length;
 
   return (
     <div className="flex min-h-screen w-full flex-col">
@@ -61,9 +35,9 @@ export default function DashboardPage() {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">$45,231.89</div>
+              <div className="text-2xl font-bold">$0.00</div>
               <p className="text-xs text-muted-foreground">
-                +20.1% from last month
+                No sales data available
               </p>
             </CardContent>
           </Card>
@@ -75,7 +49,7 @@ export default function DashboardPage() {
               <Boxes className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{lowStock}</div>
+              <div className="text-2xl font-bold">0</div>
               <p className="text-xs text-muted-foreground">
                 Items needing reorder
               </p>
@@ -90,12 +64,10 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {expiringIn30 + expiringIn60 + expiringIn90}
+                0
               </div>
               <div className="text-xs text-muted-foreground flex gap-2">
-                <span className="text-red-500">{expiringIn30} in 30d</span>
-                <span className="text-orange-500">{expiringIn60} in 60d</span>
-                <span className="text-yellow-500">{expiringIn90} in 90d</span>
+                No expiry data available
               </div>
             </CardContent>
           </Card>
@@ -105,9 +77,9 @@ export default function DashboardPage() {
               <PackageCheck className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">+12,234</div>
+              <div className="text-2xl font-bold">0</div>
               <p className="text-xs text-muted-foreground">
-                +19% from last month
+                No sales data available
               </p>
             </CardContent>
           </Card>
@@ -128,7 +100,7 @@ export default function DashboardPage() {
             <CardHeader>
               <CardTitle className="font-headline">Recent Sales</CardTitle>
               <CardDescription>
-                You made 265 sales this month.
+                You made 0 sales this month.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -140,19 +112,11 @@ export default function DashboardPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sales.slice(0, 5).map((sale) => (
-                    <TableRow key={sale.id}>
-                      <TableCell>
-                        <div className="font-medium">{sale.customerName}</div>
-                        <div className="hidden text-sm text-muted-foreground md:inline">
-                          {sale.medicineName}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        ${sale.totalPrice.toFixed(2)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  <TableRow>
+                    <TableCell colSpan={2} className="text-center">
+                      No recent sales.
+                    </TableCell>
+                  </TableRow>
                 </TableBody>
               </Table>
             </CardContent>

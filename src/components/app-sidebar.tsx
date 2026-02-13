@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   Sidebar,
@@ -9,7 +9,7 @@ import {
   SidebarMenuButton,
   SidebarFooter,
   SidebarSeparator,
-} from "@/components/ui/sidebar";
+} from '@/components/ui/sidebar';
 import {
   LayoutDashboard,
   Boxes,
@@ -22,28 +22,30 @@ import {
   LifeBuoy,
   LogOut,
   Handshake,
-} from "lucide-react";
-import { usePathname } from "next/navigation";
+} from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { useAuth } from '@/firebase';
 
 const navItems = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/inventory", icon: Boxes, label: "Inventory" },
-  { href: "/sales", icon: ShoppingBag, label: "Sales (POS)" },
-  { href: "/customers", icon: Users, label: "Customers" },
-  { href: "/retailers", icon: Handshake, label: "Retailers" },
-  { href: "/suppliers", icon: Truck, label: "Suppliers" },
-  { href: "/reports", icon: BarChart2, label: "Reports" },
+  { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { href: '/medicines', icon: Boxes, label: 'Medicines' },
+  { href: '/sales', icon: ShoppingBag, label: 'Sales (POS)' },
+  { href: '/customers', icon: Users, label: 'Customers' },
+  { href: '/retailers', icon: Handshake, label: 'Retailers' },
+  { href: '/suppliers', icon: Truck, label: 'Suppliers' },
+  { href: '/reports', icon: BarChart2, label: 'Reports' },
 ];
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const auth = useAuth();
 
   return (
     <Sidebar>
       <SidebarHeader>
         <div className="flex items-center gap-2">
           <h1 className="text-xl font-headline font-semibold text-sidebar-foreground">
-            PharmaFlow
+            Sateri Medical
           </h1>
         </div>
       </SidebarHeader>
@@ -69,19 +71,19 @@ export function AppSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton tooltip={{ children: "Settings" }}>
+            <SidebarMenuButton tooltip={{ children: 'Settings' }}>
               <Settings />
               <span>Settings</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton tooltip={{ children: "Support" }}>
+            <SidebarMenuButton tooltip={{ children: 'Support' }}>
               <LifeBuoy />
               <span>Support</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton tooltip={{ children: "Logout" }}>
+            <SidebarMenuButton onClick={() => auth.signOut()} tooltip={{ children: 'Logout' }}>
               <LogOut />
               <span>Logout</span>
             </SidebarMenuButton>
