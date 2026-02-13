@@ -68,20 +68,20 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   // Effect to subscribe to Firebase auth state changes
   useEffect(() => {
     if (!auth) { // If no Auth service instance, cannot determine user state
-      setUserAuthState(s => ({ ...s, user: null, isUserLoading: false, userError: new Error("Auth service not provided.") }));
+      setUserAuthState(s => ({ ...s, user: null, isUserLoading: false, userError: new Error("Auth service not provided."), isProfileLoading: false }));
       return;
     }
-
-    setUserAuthState(s => ({ ...s, user: null, isUserLoading: true, userError: null })); // Reset on auth instance change
 
     const unsubscribe = onAuthStateChanged(
       auth,
       (firebaseUser) => { // Auth state determined
-        setUserAuthState(s => ({ ...s, user: firebaseUser, isUserLoading: false, userError: null }));
+        // If the user state changes, we are about to load their profile.
+        // Set loading to true to prevent race conditions in downstream hooks.
+        setUserAuthState(s => ({ ...s, user: firebaseUser, isUserLoading: false, userError: null, isProfileLoading: !!firebaseUser }));
       },
       (error) => { // Auth listener error
         console.error("FirebaseProvider: onAuthStateChanged error:", error);
-        setUserAuthState(s => ({ ...s, user: null, isUserLoading: false, userError: error }));
+        setUserAuthState(s => ({ ...s, user: null, isUserLoading: false, userError: error, isProfileLoading: false }));
       }
     );
     return () => unsubscribe(); // Cleanup
