@@ -55,23 +55,27 @@ export const Columns = () => {
       header: 'Composition',
     },
     {
-      accessorKey: 'category',
-      header: 'Category',
+        accessorKey: 'company',
+        header: 'Company',
     },
     {
-      accessorKey: 'company',
-      header: 'Company',
+        accessorKey: 'unitsPerBulk',
+        header: 'Packing',
+        cell: ({ row }) => {
+            const medicine = row.original;
+            return <div>{`${medicine.unitsPerBulk} ${medicine.smallestUnitName}s / ${medicine.bulkUnitName}`}</div>
+        }
     },
     {
-      accessorKey: 'sellingPrice',
-      header: 'Price',
+      accessorKey: 'baseSellingPrice',
+      header: () => <div className="text-right">Unit Price</div>,
       cell: ({ row }) => {
-        const amount = parseFloat(row.getValue('sellingPrice'));
-        const formatted = new Intl.NumberFormat('en-US', {
+        const amount = parseFloat(row.getValue('baseSellingPrice'));
+        const formatted = new Intl.NumberFormat('en-IN', {
           style: 'currency',
-          currency: 'USD',
+          currency: 'INR',
         }).format(amount);
-        return <div className="font-medium">{formatted}</div>;
+        return <div className="font-medium text-right">{formatted}</div>;
       },
     },
     {

@@ -34,21 +34,28 @@ type AddMedicineDialogProps = {
   onOpenChange: (isOpen: boolean) => void;
 };
 
+type AddMedicineFormValues = Omit<Medicine, 'id' | 'createdAt' | 'updatedAt'>;
+
 export function AddMedicineDialog({ children, isOpen, onOpenChange }: AddMedicineDialogProps) {
   const firestore = useFirestore();
   const { toast } = useToast();
-  const form = useForm<Omit<Medicine, 'id'>>({
+  const form = useForm<AddMedicineFormValues>({
     resolver: zodResolver(medicineSchema),
     defaultValues: {
       name: '',
       composition: '',
       category: '',
       company: '',
-      sellingPrice: 0,
+      baseSellingPrice: 0,
+      smallestUnitName: 'tablet',
+      unitsPerBulk: 10,
+      bulkUnitName: 'strip',
+      reorderPoint: 10,
+      taxRateGst: 5,
     },
   });
 
-  async function onSubmit(values: Omit<Medicine, 'id'>) {
+  async function onSubmit(values: AddMedicineFormValues) {
     if (!firestore) return;
 
     const medicinesCollection = collection(firestore, 'medicines');
@@ -70,7 +77,7 @@ export function AddMedicineDialog({ children, isOpen, onOpenChange }: AddMedicin
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[480px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add New Medicine</DialogTitle>
           <DialogDescription>
@@ -86,7 +93,7 @@ export function AddMedicineDialog({ children, isOpen, onOpenChange }: AddMedicin
                 <FormItem>
                   <FormLabel>Medicine Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. Paracetamol 500mg" {...field} />
+                    <Input placeholder="e.g. Crocin Advance" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -105,46 +112,120 @@ export function AddMedicineDialog({ children, isOpen, onOpenChange }: AddMedicin
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="category"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Category</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g. Painkiller" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-             <FormField
-              control={form.control}
-              name="company"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Company</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g. Pharma Inc." {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
                 control={form.control}
-                name="sellingPrice"
+                name="category"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Selling Price</FormLabel>
+                    <FormLabel>Category</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" {...field} />
+                      <Input placeholder="e.g. Painkiller" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            <DialogFooter>
+              <FormField
+                control={form.control}
+                name="company"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Company</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g. GlaxoSmithKline" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+               <FormField
+                control={form.control}
+                name="baseSellingPrice"
+                render={({ field }) => (
+                  <FormItem className="md:col-span-2">
+                    <FormLabel>Selling Price (per smallest unit)</FormLabel>
+                    <FormControl>
+                      <Input type="number" step="0.01" placeholder="e.g. 2.50" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+               <FormField
+                control={form.control}
+                name="smallestUnitName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Smallest Unit</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g. tablet" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+                 <FormField
+                control={form.control}
+                name="taxRateGst"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>GST (%)</FormLabel>
+                    <FormControl>
+                      <Input type="number" step="0.01" placeholder="e.g. 5" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+              <FormField
+                control={form.control}
+                name="unitsPerBulk"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Units per Bulk</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="e.g. 10" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="bulkUnitName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Bulk Unit Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g. strip" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="reorderPoint"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Re-order Point</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="e.g. 20" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <DialogFooter className="pt-4">
                 <DialogClose asChild>
                     <Button type="button" variant="secondary">Cancel</Button>
                 </DialogClose>

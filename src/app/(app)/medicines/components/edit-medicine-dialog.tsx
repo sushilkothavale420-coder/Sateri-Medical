@@ -45,13 +45,6 @@ export function EditMedicineDialog({
   const { toast } = useToast();
   const form = useForm<EditMedicineFormValues>({
     resolver: zodResolver(medicineSchema),
-    defaultValues: {
-      name: medicine.name,
-      composition: medicine.composition,
-      category: medicine.category,
-      company: medicine.company,
-      sellingPrice: medicine.sellingPrice,
-    },
   });
 
   useEffect(() => {
@@ -61,10 +54,15 @@ export function EditMedicineDialog({
         composition: medicine.composition,
         category: medicine.category,
         company: medicine.company,
-        sellingPrice: medicine.sellingPrice,
+        baseSellingPrice: medicine.baseSellingPrice,
+        smallestUnitName: medicine.smallestUnitName,
+        unitsPerBulk: medicine.unitsPerBulk,
+        bulkUnitName: medicine.bulkUnitName,
+        reorderPoint: medicine.reorderPoint,
+        taxRateGst: medicine.taxRateGst,
       });
     }
-  }, [medicine, form]);
+  }, [medicine, form, isOpen]);
 
   async function onSubmit(values: EditMedicineFormValues) {
     if (!firestore || !medicine.id) return;
@@ -85,7 +83,7 @@ export function EditMedicineDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Medicine</DialogTitle>
           <DialogDescription>
@@ -101,7 +99,7 @@ export function EditMedicineDialog({
                 <FormItem>
                   <FormLabel>Medicine Name</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input placeholder="e.g. Crocin Advance" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -114,52 +112,126 @@ export function EditMedicineDialog({
                 <FormItem>
                   <FormLabel>Composition (Generic Name)</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input placeholder="e.g. Paracetamol" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="category"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Category</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="company"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Company</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="sellingPrice"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Selling Price</FormLabel>
-                  <FormControl>
-                    <Input type="number" step="0.01" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <DialogFooter>
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="category"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Category</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g. Painkiller" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="company"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Company</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g. GlaxoSmithKline" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+               <FormField
+                control={form.control}
+                name="baseSellingPrice"
+                render={({ field }) => (
+                  <FormItem className="md:col-span-2">
+                    <FormLabel>Selling Price (per smallest unit)</FormLabel>
+                    <FormControl>
+                      <Input type="number" step="0.01" placeholder="e.g. 2.50" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+               <FormField
+                control={form.control}
+                name="smallestUnitName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Smallest Unit</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g. tablet" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="taxRateGst"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>GST (%)</FormLabel>
+                    <FormControl>
+                      <Input type="number" step="0.01" placeholder="e.g. 5" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+              <FormField
+                control={form.control}
+                name="unitsPerBulk"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Units per Bulk</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="e.g. 10" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="bulkUnitName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Bulk Unit Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g. strip" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="reorderPoint"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Re-order Point</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="e.g. 20" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <DialogFooter className="pt-4">
               <DialogClose asChild>
                 <Button type="button" variant="secondary">
                   Cancel

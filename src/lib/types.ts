@@ -2,11 +2,17 @@ import { z } from "zod";
 
 export const medicineSchema = z.object({
   name: z.string().min(1, "Name is required."),
+  composition: z.string().min(1, "Composition is required."),
   category: z.string().min(1, "Category is required."),
   company: z.string().min(1, "Company is required."),
-  composition: z.string().min(1, "Composition is required."),
-  sellingPrice: z.coerce.number().min(0, "Selling price must be a positive number."),
+  baseSellingPrice: z.coerce.number().min(0, "Price must be a non-negative number."),
+  smallestUnitName: z.string().min(1, "Smallest unit name is required (e.g., tablet, capsule, ml)."),
+  unitsPerBulk: z.coerce.number().min(1, "Units per bulk must be at least 1."),
+  bulkUnitName: z.string().min(1, "Bulk unit name is required (e.g., strip, box, bottle)."),
+  reorderPoint: z.coerce.number().min(0, "Reorder point must be a non-negative number.").optional(),
+  taxRateGst: z.coerce.number().min(0, "GST rate must be a non-negative number.").optional(),
 });
+
 
 export type Medicine = z.infer<typeof medicineSchema> & { 
   id: string;
