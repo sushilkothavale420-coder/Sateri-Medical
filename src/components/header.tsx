@@ -7,14 +7,18 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { CircleUser, PanelLeft } from "lucide-react";
+import { CircleUser } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { useAuth } from "@/firebase";
+import Link from "next/link";
 
 type HeaderProps = {
   pageTitle: string;
 };
 
 export function Header({ pageTitle }: HeaderProps) {
+  const auth = useAuth();
+
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6 sticky top-0 z-30">
         <SidebarTrigger className="md:hidden"/>
@@ -28,12 +32,14 @@ export function Header({ pageTitle }: HeaderProps) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Admin Account</DropdownMenuLabel>
+            <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Settings</DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/settings">Settings</Link>
+            </DropdownMenuItem>
             <DropdownMenuItem>Support</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Logout</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => auth.signOut()}>Logout</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

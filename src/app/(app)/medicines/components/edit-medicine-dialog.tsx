@@ -6,9 +6,8 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
-  DialogClose
+  DialogClose,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,57 +23,73 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { useFirestore } from '@/firebase';
-import { collection } from 'firebase/firestore';
-import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { doc } from 'firebase/firestore';
+import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
+import { useEffect } from 'react';
 
-type AddMedicineDialogProps = {
-  children: React.ReactNode;
+type EditMedicineFormValues = Omit<Medicine, 'id' | 'createdAt' | 'updatedAt'>;
+
+type EditMedicineDialogProps = {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
+  medicine: Medicine;
 };
 
-export function AddMedicineDialog({ children, isOpen, onOpenChange }: AddMedicineDialogProps) {
+export function EditMedicineDialog({
+  isOpen,
+  onOpenChange,
+  medicine,
+}: EditMedicineDialogProps) {
   const firestore = useFirestore();
   const { toast } = useToast();
-  const form = useForm<Omit<Medicine, 'id'>>({
+  const form = useForm<EditMedicineFormValues>({
     resolver: zodResolver(medicineSchema),
     defaultValues: {
-      name: '',
-      composition: '',
-      category: '',
-      company: '',
-      sellingPrice: 0,
+      name: medicine.name,
+      composition: medicine.composition,
+      category: medicine.category,
+      company: medicine.company,
+      sellingPrice: medicine.sellingPrice,
     },
   });
 
-  async function onSubmit(values: Omit<Medicine, 'id'>) {
-    if (!firestore) return;
+  useEffect(() => {
+    if (medicine) {
+      form.reset({
+        name: medicine.name,
+        composition: medicine.composition,
+        category: medicine.category,
+        company: medicine.company,
+        sellingPrice: medicine.sellingPrice,
+      });
+    }
+  }, [medicine, form]);
 
-    const medicinesCollection = collection(firestore, 'medicines');
-    
-    addDocumentNonBlocking(medicinesCollection, {
-        ...values,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+  async function onSubmit(values: EditMedicineFormValues) {
+    if (!firestore || !medicine.id) return;
+
+    const medicineDocRef = doc(firestore, 'medicines', medicine.id);
+
+    updateDocumentNonBlocking(medicineDocRef, {
+      ...values,
+      updatedAt: new Date().toISOString(),
     });
 
     toast({
-      title: 'Medicine Added',
-      description: `${values.name} has been added to the inventory.`,
+      title: 'Medicine Updated',
+      description: `${values.name} has been updated.`,
     });
-    form.reset();
     onOpenChange(false);
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle>Add New Medicine</DialogTitle>
+          <DialogTitle>Edit Medicine</DialogTitle>
           <DialogDescription>
-            Fill in the details below to add a new medicine to the inventory.
+            Update the details for "{medicine.name}".
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -86,7 +101,7 @@ export function AddMedicineDialog({ children, isOpen, onOpenChange }: AddMedicin
                 <FormItem>
                   <FormLabel>Medicine Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. Paracetamol 500mg" {...field} />
+                    <Input {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -99,7 +114,7 @@ export function AddMedicineDialog({ children, isOpen, onOpenChange }: AddMedicin
                 <FormItem>
                   <FormLabel>Composition (Generic Name)</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. Paracetamol" {...field} />
+                    <Input {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -112,43 +127,45 @@ export function AddMedicineDialog({ children, isOpen, onOpenChange }: AddMedicin
                 <FormItem>
                   <FormLabel>Category</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. Painkiller" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-             <FormField
-              control={form.control}
-              name="company"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Company</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g. Pharma Inc." {...field} />
+                    <Input {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
             <FormField
-                control={form.control}
-                name="sellingPrice"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Selling Price</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.01" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              control={form.control}
+              name="company"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Company</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="sellingPrice"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Selling Price</FormLabel>
+                  <FormControl>
+                    <Input type="number" step="0.01" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <DialogFooter>
-                <DialogClose asChild>
-                    <Button type="button" variant="secondary">Cancel</Button>
-                </DialogClose>
-              <Button type="submit">Save Medicine</Button>
+              <DialogClose asChild>
+                <Button type="button" variant="secondary">
+                  Cancel
+                </Button>
+              </DialogClose>
+              <Button type="submit">Save Changes</Button>
             </DialogFooter>
           </form>
         </Form>
