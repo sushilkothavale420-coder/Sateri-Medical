@@ -14,6 +14,13 @@ export const medicineSchema = z.object({
 
 export type Medicine = z.infer<typeof medicineSchema> & { id: string };
 
+export const newRetailerSchema = z.object({
+  email: z.string().email("Invalid email address."),
+  password: z.string().min(6, "Password must be at least 6 characters long."),
+});
+
+export type NewRetailer = z.infer<typeof newRetailerSchema>;
+
 export type UserProfile = {
   id: string;
   email: string;
