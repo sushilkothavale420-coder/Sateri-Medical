@@ -31,7 +31,6 @@ const navItems = [
   { href: '/sales', icon: ShoppingBag, label: 'Sales (POS)', adminOnly: false },
   { href: '/customers', icon: Users, label: 'Customers', adminOnly: false },
   { href: '/retailers', icon: Handshake, label: 'Retailers', adminOnly: true },
-  { href: '/suppliers', icon: Truck, label: 'Suppliers', adminOnly: true },
   { href: '/reports', icon: BarChart2, label: 'Reports', adminOnly: true },
 ];
 

@@ -28,3 +28,17 @@ export type UserProfile = {
   createdAt: string;
   updatedAt: string;
 };
+
+export const customerSchema = z.object({
+  name: z.string().min(1, "Name is required."),
+  phoneNumber: z.string().min(1, "Phone number is required."),
+  email: z.string().email("Invalid email address.").optional().or(z.literal('')),
+  address: z.string().optional(),
+});
+
+export type Customer = z.infer<typeof customerSchema> & {
+  id: string;
+  debtAmount: number;
+  createdAt: string;
+  updatedAt: string;
+};
