@@ -33,8 +33,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { SalesChart } from './components/sales-chart';
-import { format } from 'date-fns';
 
 export default function DashboardPage() {
   const firestore = useFirestore();
@@ -127,41 +125,6 @@ export default function DashboardPage() {
     return customers.reduce((acc, customer) => acc + (customer.debtAmount || 0), 0);
   }, [customers]);
 
-  const salesChartData = useMemo(() => {
-    if (!saleItems) return [];
-
-    const monthlySales: Record<string, { total: number }> = {};
-
-    saleItems.forEach(item => {
-      const createdAt = item.createdAt;
-      if (!createdAt) return;
-
-      // Handle both Firestore Timestamp and ISO string
-      const date = (createdAt as any).toDate
-        ? (createdAt as any).toDate()
-        : new Date(createdAt as string);
-      const monthKey = format(date, 'yyyy-MM');
-
-      if (!monthlySales[monthKey]) {
-        monthlySales[monthKey] = { total: 0 };
-      }
-      monthlySales[monthKey].total += item.itemTotalWithTax;
-    });
-
-    const data = [];
-    const today = new Date();
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
-      const monthKey = format(d, 'yyyy-MM');
-      const monthName = format(d, 'MMM');
-      data.push({
-        month: monthName,
-        total: monthlySales[monthKey]?.total || 0,
-      });
-    }
-    return data;
-  }, [saleItems]);
-
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('en-IN', {
       style: 'currency',
@@ -251,18 +214,7 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
           </div>
-          <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
-            <Card className="xl:col-span-2">
-              <CardHeader>
-                <CardTitle>Sales Overview</CardTitle>
-                <CardDescription>
-                  Your sales performance for the last 6 months.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pl-2">
-                <SalesChart data={salesChartData} />
-              </CardContent>
-            </Card>
+          <div className="grid gap-4 md:gap-8">
             <Card>
               <CardHeader>
                 <CardTitle>Recent Sales</CardTitle>
