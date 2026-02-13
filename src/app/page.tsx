@@ -39,9 +39,17 @@ export default function HomePage() {
   
   return (
     <main className="flex min-h-screen flex-col items-center p-8 bg-background">
-      <div className="w-full max-w-6xl">
+      <div className="relative w-full max-w-6xl">
+        <div className="absolute top-0 right-0 flex items-center gap-4">
+          <Button asChild>
+            <Link href="/login">Login as Admin</Link>
+          </Button>
+          <Button asChild variant="secondary">
+            <Link href="/login">Login as Retailer</Link>
+          </Button>
+        </div>
 
-        <div className="mb-12">
+        <div className="mb-12 mt-20">
             <Carousel
               plugins={[plugin.current]}
               className="w-full"
@@ -119,14 +127,6 @@ export default function HomePage() {
           </Card>
         </div>
 
-        <div className="flex justify-center gap-4">
-          <Button asChild size="lg">
-            <Link href="/login">Login as Admin</Link>
-          </Button>
-          <Button asChild variant="secondary" size="lg">
-            <Link href="/login">Login as Retailer</Link>
-          </Button>
-        </div>
       </div>
     </main>
   );
