@@ -1,21 +1,11 @@
 'use client';
-import { useFirestore, useUser, useDoc, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
-import { UserProfile } from '@/lib/types';
+import { useUser } from '@/firebase';
 
 export function useAdmin() {
-    const { user, isUserLoading: isAuthLoading } = useUser();
-    const firestore = useFirestore();
+    const { isUserLoading, isProfileLoading, userProfile } = useUser();
 
-    const userProfileRef = useMemoFirebase(
-        () => (firestore && user ? doc(firestore, 'users', user.uid) : null),
-        [firestore, user]
-    );
-
-    const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userProfileRef);
-
-    const isLoading = isAuthLoading || isProfileLoading;
-    const isAdmin = !isLoading && userProfile?.role === 'Admin';
+    const isLoading = isUserLoading || isProfileLoading;
+    const isAdmin = !isLoading && !!userProfile && userProfile.role === 'Admin';
 
     return { isAdmin, isLoading };
 }
