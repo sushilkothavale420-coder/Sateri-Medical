@@ -43,7 +43,8 @@ export default function LoginPage() {
   }, [searchParams, toast, router]);
 
   useEffect(() => {
-    // This effect handles an already-logged-in admin landing on this page.
+    // This effect handles an already-logged-in admin landing on this page,
+    // or a newly logged-in admin.
     if (!isAdminLoading && isAdmin) {
       router.push('/dashboard');
     }
@@ -54,8 +55,8 @@ export default function LoginPage() {
     if (!auth) return;
     try {
       await initiateEmailSignIn(auth, loginEmail, loginPassword);
-      // On success, go to dashboard. The AppLayout will verify admin role.
-      router.push('/dashboard');
+      // On success, the useEffect hook will handle the redirect once the
+      // admin status is confirmed. This avoids a race condition.
     } catch (error) {
       let title = 'Login Failed';
       let description = 'An unexpected error occurred. Please try again.';
