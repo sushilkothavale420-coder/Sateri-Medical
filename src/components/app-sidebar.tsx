@@ -19,6 +19,7 @@ import {
   Settings,
   LogOut,
   Handshake,
+  Warehouse,
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/firebase';
@@ -27,6 +28,7 @@ import Link from 'next/link';
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/medicines', icon: Boxes, label: 'Medicines' },
+  { href: '/stock', icon: Warehouse, label: 'Stock Management' },
   { href: '/sales', icon: ShoppingBag, label: 'Sales (POS)' },
   { href: '/customers', icon: Users, label: 'Customers' },
   { href: '/retailers', icon: Handshake, label: 'Retailers' },

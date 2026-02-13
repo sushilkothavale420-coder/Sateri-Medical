@@ -45,12 +45,18 @@ export function EditMedicineDialog({
   const { toast } = useToast();
   const form = useForm<EditMedicineFormValues>({
     resolver: zodResolver(medicineSchema),
-    defaultValues: medicine,
+    defaultValues: {},
   });
 
   useEffect(() => {
     if (medicine && isOpen) {
-      form.reset(medicine);
+      form.reset({
+        ...medicine,
+        tabletsPerStrip: medicine.tabletsPerStrip ?? undefined,
+        stripsPerBox: medicine.stripsPerBox ?? undefined,
+        reorderPoint: medicine.reorderPoint ?? undefined,
+        taxRateGst: medicine.taxRateGst ?? undefined,
+      });
     }
   }, [medicine, isOpen, form]);
 
@@ -89,7 +95,7 @@ export function EditMedicineDialog({
                 <FormItem>
                   <FormLabel>Medicine Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. Crocin Advance" {...field} />
+                    <Input placeholder="e.g. Paracetamol 500mg" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -129,7 +135,7 @@ export function EditMedicineDialog({
                   <FormItem>
                     <FormLabel>Company</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. GlaxoSmithKline" {...field} />
+                      <Input placeholder="e.g. Pharma Inc." {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -143,7 +149,7 @@ export function EditMedicineDialog({
                 name="basePurchasePrice"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Purchase Price</FormLabel>
+                    <FormLabel>Purchase Price (per tablet)</FormLabel>
                     <FormControl>
                       <Input type="number" step="0.01" placeholder="e.g. 1.80" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} value={Number.isFinite(field.value) ? field.value : ''} />
                     </FormControl>
@@ -156,7 +162,7 @@ export function EditMedicineDialog({
                 name="baseSellingPrice"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Selling Price</FormLabel>
+                    <FormLabel>Selling Price (per tablet)</FormLabel>
                     <FormControl>
                       <Input type="number" step="0.01" placeholder="e.g. 2.50" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} value={Number.isFinite(field.value) ? field.value : ''} />
                     </FormControl>
@@ -165,6 +171,36 @@ export function EditMedicineDialog({
                 )}
               />
             </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="tabletsPerStrip"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tablets per Strip</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="e.g. 10" {...field} onChange={e => field.onChange(e.target.value === '' ? null : e.target.valueAsNumber)} value={field.value ?? ''} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="stripsPerBox"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Strips per Box</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="e.g. 10" {...field} onChange={e => field.onChange(e.target.value === '' ? null : e.target.valueAsNumber)} value={field.value ?? ''} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
                <FormField
@@ -185,9 +221,9 @@ export function EditMedicineDialog({
                 name="reorderPoint"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Re-order Point</FormLabel>
+                    <FormLabel>Re-order Point (Tablets)</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="e.g. 20" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} value={Number.isFinite(field.value) ? field.value : ''} />
+                      <Input type="number" placeholder="e.g. 200" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} value={Number.isFinite(field.value) ? field.value : ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

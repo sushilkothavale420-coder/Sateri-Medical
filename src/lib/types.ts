@@ -7,16 +7,29 @@ export const medicineSchema = z.object({
   company: z.string().min(1, "Company is required."),
   basePurchasePrice: z.coerce.number().min(0, "Purchase price must be a non-negative number."),
   baseSellingPrice: z.coerce.number().min(0, "Selling price must be a non-negative number."),
+  tabletsPerStrip: z.coerce.number().min(1, "Must be at least 1.").optional().nullable(),
+  stripsPerBox: z.coerce.number().min(1, "Must be at least 1.").optional().nullable(),
   reorderPoint: z.coerce.number().min(0, "Reorder point must be a non-negative number.").optional(),
   taxRateGst: z.coerce.number().min(0, "GST rate must be a non-negative number.").optional(),
 });
-
 
 export type Medicine = z.infer<typeof medicineSchema> & { 
   id: string;
   createdAt: string;
   updatedAt: string;
 };
+
+export const stockEntrySchema = z.object({
+  medicineId: z.string().min(1, "Please select a medicine."),
+  batchNumber: z.string().min(1, "Batch number is required."),
+  expiryDate: z.date({ required_error: "Expiry date is required." }),
+  quantity: z.coerce.number().min(1, "Quantity must be at least 1."),
+  unit: z.enum(["Tablet", "Strip", "Box"]),
+  purchasePricePerSmallestUnit: z.coerce.number().min(0, "Purchase price is required."),
+});
+
+export type StockEntry = z.infer<typeof stockEntrySchema>;
+
 
 export const newRetailerSchema = z.object({
   email: z.string().email("Invalid email address."),

@@ -48,6 +48,8 @@ export function AddMedicineDialog({ children, isOpen, onOpenChange }: AddMedicin
       company: '',
       basePurchasePrice: undefined,
       baseSellingPrice: undefined,
+      tabletsPerStrip: undefined,
+      stripsPerBox: undefined,
       reorderPoint: undefined,
       taxRateGst: undefined,
     },
@@ -91,7 +93,7 @@ export function AddMedicineDialog({ children, isOpen, onOpenChange }: AddMedicin
                 <FormItem>
                   <FormLabel>Medicine Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. Crocin Advance" {...field} />
+                    <Input placeholder="e.g. Paracetamol 500mg" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -131,7 +133,7 @@ export function AddMedicineDialog({ children, isOpen, onOpenChange }: AddMedicin
                   <FormItem>
                     <FormLabel>Company</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. GlaxoSmithKline" {...field} />
+                      <Input placeholder="e.g. Pharma Inc." {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -145,7 +147,7 @@ export function AddMedicineDialog({ children, isOpen, onOpenChange }: AddMedicin
                 name="basePurchasePrice"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Purchase Price</FormLabel>
+                    <FormLabel>Purchase Price (per tablet)</FormLabel>
                     <FormControl>
                       <Input type="number" step="0.01" placeholder="e.g. 1.80" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} value={Number.isFinite(field.value) ? field.value : ''} />
                     </FormControl>
@@ -158,9 +160,38 @@ export function AddMedicineDialog({ children, isOpen, onOpenChange }: AddMedicin
                 name="baseSellingPrice"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Selling Price</FormLabel>
+                    <FormLabel>Selling Price (per tablet)</FormLabel>
                     <FormControl>
                       <Input type="number" step="0.01" placeholder="e.g. 2.50" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} value={Number.isFinite(field.value) ? field.value : ''} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="tabletsPerStrip"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tablets per Strip</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="e.g. 10" {...field} onChange={e => field.onChange(e.target.value === '' ? null : e.target.valueAsNumber)} value={field.value ?? ''} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="stripsPerBox"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Strips per Box</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="e.g. 10" {...field} onChange={e => field.onChange(e.target.value === '' ? null : e.target.valueAsNumber)} value={field.value ?? ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -187,9 +218,9 @@ export function AddMedicineDialog({ children, isOpen, onOpenChange }: AddMedicin
                 name="reorderPoint"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Re-order Point</FormLabel>
+                    <FormLabel>Re-order Point (Tablets)</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="e.g. 20" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} value={Number.isFinite(field.value) ? field.value : ''} />
+                      <Input type="number" placeholder="e.g. 200" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} value={Number.isFinite(field.value) ? field.value : ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

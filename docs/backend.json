@@ -109,17 +109,13 @@
           "type": "number",
           "description": "The standard selling price per smallest unit of the medicine."
         },
-        "smallestUnitName": {
-          "type": "string",
-          "description": "The name of the smallest measurable unit for this medicine (e.g., 'tablet', 'ml', 'capsule')."
-        },
-        "bulkUnitName": {
-          "type": "string",
-          "description": "The name of the bulk unit for purchasing or larger packaging (e.g., 'strip', 'box', 'bottle')."
-        },
-        "unitsPerBulk": {
+        "tabletsPerStrip": {
           "type": "number",
-          "description": "The number of smallest units contained within one bulk unit (e.g., 10 tablets per strip)."
+          "description": "The number of tablets contained within one strip."
+        },
+        "stripsPerBox": {
+          "type": "number",
+          "description": "The number of strips contained within one box."
         },
         "reorderPoint": {
           "type": "number",
@@ -153,8 +149,6 @@
         "company",
         "basePurchasePrice",
         "baseSellingPrice",
-        "smallestUnitName",
-        "unitsPerBulk",
         "reorderPoint",
         "taxRateGst",
         "createdAt",
