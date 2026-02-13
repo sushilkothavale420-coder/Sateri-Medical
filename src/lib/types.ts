@@ -117,6 +117,35 @@ export type SaleItem = z.infer<typeof saleItemSchema> & {
   createdAt: any;
 };
 
+export const purchaseOrderSchema = z.object({
+    supplierId: z.string().min(1, "Supplier is required."),
+    orderDate: z.string(),
+    status: z.string(), // e.g., 'Pending', 'Ordered', 'Received'
+    totalAmount: z.coerce.number(),
+    createdByUserId: z.string(),
+  });
+  
+  export type PurchaseOrder = z.infer<typeof purchaseOrderSchema> & {
+    id: string;
+    supplierName?: string; // For display
+    createdAt: any;
+    updatedAt: any;
+  };
+  
+  export const purchaseOrderItemSchema = z.object({
+    purchaseOrderId: z.string(),
+    medicineId: z.string(),
+    requestedQuantity: z.coerce.number().min(1, "Quantity must be at least 1."),
+    unitPriceAtOrder: z.coerce.number().min(0, "Price must be non-negative."),
+    totalPrice: z.coerce.number(),
+  });
+  
+  export type PurchaseOrderItem = z.infer<typeof purchaseOrderItemSchema> & {
+    id: string;
+    createdAt: any;
+    updatedAt: any;
+  };
+
 export const publicMedicineRequestSchema = z.object({
   name: z.string().min(1, "Name is required."),
   contactNumber: z.string().min(1, "Contact number is required."),

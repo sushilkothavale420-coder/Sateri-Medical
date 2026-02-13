@@ -18,6 +18,7 @@ import {
   LogOut,
   Warehouse,
   Truck,
+  ClipboardList,
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/firebase';
@@ -30,6 +31,7 @@ const navItems = [
   { href: '/stock', icon: Warehouse, label: 'Stock' },
   { href: '/customers', icon: Users, label: 'Customers' },
   { href: '/suppliers', icon: Truck, label: 'Suppliers' },
+  { href: '/purchase-orders', icon: ClipboardList, label: 'Purchase Orders' },
 ];
 
 export function AppSidebar() {
@@ -51,7 +53,7 @@ export function AppSidebar() {
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton
                 asChild
-                isActive={pathname === item.href}
+                isActive={pathname.startsWith(item.href)}
                 tooltip={{ children: item.label }}
               >
                 <Link href={item.href}>
