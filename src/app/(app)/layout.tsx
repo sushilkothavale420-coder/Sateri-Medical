@@ -6,7 +6,7 @@ import { useUser, useCollection, useFirestore, useMemoFirebase, useAuth } from '
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo } from 'react';
 import { Header } from '@/components/header';
-import { collection } from 'firebase/firestore';
+import { collection, query, where, orderBy } from 'firebase/firestore';
 import { Batch } from '@/lib/types';
 import { useAdmin } from '@/hooks/use-admin';
 
@@ -21,24 +21,21 @@ export default function AppLayout({
   const firestore = useFirestore();
   const auth = useAuth();
 
-  const batchesQuery = useMemoFirebase(
-    () => (firestore && user ? collection(firestore, 'batches') : null),
-    [firestore, user]
-  );
-  const { data: batches } = useCollection<Batch>(batchesQuery);
+  const expiringBatchesQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
 
-  const expiringNotifications = useMemo(() => {
-    if (!batches) return [];
-    
-    const today = new Date();
     const thirtyDaysFromNow = new Date();
-    thirtyDaysFromNow.setDate(today.getDate() + 30);
+    thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+    const thirtyDaysFromNowStr = thirtyDaysFromNow.toISOString().split('T')[0];
 
-    return batches.filter(batch => {
-      const expiryDate = new Date(batch.expiryDate);
-      return expiryDate <= thirtyDaysFromNow;
-    }).sort((a,b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime());
-  }, [batches]);
+    return query(
+      collection(firestore, 'batches'),
+      where('expiryDate', '<=', thirtyDaysFromNowStr),
+      orderBy('expiryDate', 'asc')
+    );
+  }, [firestore, user]);
+
+  const { data: expiringNotifications } = useCollection<Batch>(expiringBatchesQuery);
 
   const isLoading = isUserLoading || isAdminLoading;
 

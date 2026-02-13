@@ -2,13 +2,10 @@
 
 import {
   AlertTriangle,
-  Boxes,
   DollarSign,
-  PackageCheck,
-  TrendingUp,
   CircleHelp,
 } from 'lucide-react';
-import { collection, collectionGroup, limit, orderBy, query } from 'firebase/firestore';
+import { collection, query, where, orderBy, limit } from 'firebase/firestore';
 import { useEffect, useMemo, useState } from 'react';
 import {
   useCollection,
@@ -17,7 +14,7 @@ import {
   useUser,
 } from '@/firebase';
 
-import { Batch, Customer, Sale, SaleItem } from '@/lib/types';
+import { Batch, Customer, Sale } from '@/lib/types';
 import {
   Card,
   CardContent,
@@ -40,7 +37,6 @@ export default function DashboardPage() {
   const [customerNames, setCustomerNames] = useState<Record<string, string>>(
     {}
   );
-  const [expiringSoonCount, setExpiringSoonCount] = useState(0);
 
   const recentSalesQuery = useMemoFirebase(
     () => {
@@ -51,6 +47,12 @@ export default function DashboardPage() {
     [firestore, user]
   );
   const { data: recentSales } = useCollection<Sale>(recentSalesQuery);
+  
+  const allSalesQuery = useMemoFirebase(
+    () => (firestore && user ? collection(firestore, 'sales') : null),
+    [firestore, user]
+  );
+  const { data: allSales } = useCollection<Sale>(allSalesQuery);
 
   const customersQuery = useMemoFirebase(
     () => (firestore && user ? collection(firestore, 'customers') : null),
@@ -58,21 +60,24 @@ export default function DashboardPage() {
   );
   const { data: customers } = useCollection<Customer>(customersQuery);
 
-  const saleItemsQuery = useMemoFirebase(
-    () => {
-      if (!firestore || !user) return null;
-      return collectionGroup(firestore, 'sale_items');
-    },
-    [firestore, user]
-  );
-  const { data: saleItems } = useCollection<SaleItem>(saleItemsQuery);
-  
-  const batchesQuery = useMemoFirebase(
-    () => (firestore && user ? collection(firestore, 'batches') : null),
-    [firestore, user]
-  );
-  const { data: batches } = useCollection<Batch>(batchesQuery);
+  const expiringBatchesQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
 
+    const today = new Date();
+    const thirtyDaysFromNow = new Date();
+    thirtyDaysFromNow.setDate(today.getDate() + 30);
+
+    const todayStr = today.toISOString().split('T')[0];
+    const thirtyDaysFromNowStr = thirtyDaysFromNow.toISOString().split('T')[0];
+
+    return query(
+        collection(firestore, 'batches'),
+        where('expiryDate', '>=', todayStr),
+        where('expiryDate', '<=', thirtyDaysFromNowStr)
+    );
+  }, [firestore, user]);
+  const { data: expiringBatches } = useCollection<Batch>(expiringBatchesQuery);
+  
   useEffect(() => {
     if (customers) {
       const names = customers.reduce(
@@ -85,40 +90,16 @@ export default function DashboardPage() {
       setCustomerNames(names);
     }
   }, [customers]);
-
-  useEffect(() => {
-    if (batches) {
-      const today = new Date();
-      const thirtyDaysFromNow = new Date();
-      thirtyDaysFromNow.setDate(today.getDate() + 30);
-
-      const soonToExpire = batches.filter(batch => {
-        const expiryDate = new Date(batch.expiryDate);
-        return expiryDate >= today && expiryDate <= thirtyDaysFromNow;
-      });
-      setExpiringSoonCount(soonToExpire.length);
+  
+  const totalRevenue = useMemo(() => {
+    if (!allSales) {
+      return 0;
     }
-  }, [batches]);
-
-  const { totalRevenue, totalProfit } = useMemo(() => {
-    if (!saleItems) {
-      return { totalRevenue: 0, totalProfit: 0 };
-    }
-    const revenue = saleItems.reduce(
-      (acc, item) => acc + item.itemTotalWithTax,
+    return allSales.reduce(
+      (acc, sale) => acc + sale.totalAmountDue,
       0
     );
-    const profit = saleItems.reduce((acc, item) => {
-      const itemProfit =
-        (item.unitSellingPrice - (item.purchasePriceAtSale || 0)) *
-        item.quantitySold;
-      return acc + itemProfit;
-    }, 0);
-    return {
-      totalRevenue: revenue,
-      totalProfit: profit,
-    };
-  }, [saleItems]);
+  }, [allSales]);
 
   const totalDebt = useMemo(() => {
     if (!customers) return 0;
@@ -136,7 +117,7 @@ export default function DashboardPage() {
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-background">
         <h1 className="text-lg font-semibold md:text-2xl">Dashboard</h1>
         <>
-          <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
@@ -150,22 +131,6 @@ export default function DashboardPage() {
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Total revenue from all sales
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Net Profit
-                </CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {formatCurrency(totalProfit)}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Estimated profit from all sales
                 </p>
               </CardContent>
             </Card>
@@ -193,23 +158,9 @@ export default function DashboardPage() {
                 <AlertTriangle className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{expiringSoonCount}</div>
+                <div className="text-2xl font-bold">{expiringBatches?.length || 0}</div>
                 <p className="text-xs text-muted-foreground">
                   Items expiring in the next 30 days
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Total Sales
-                </CardTitle>
-                <PackageCheck className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{saleItems?.length || 0}</div>
-                <p className="text-xs text-muted-foreground">
-                  Total items sold across all sales
                 </p>
               </CardContent>
             </Card>
