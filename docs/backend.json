@@ -982,7 +982,7 @@
         }
       },
       {
-        "path": "/purchase_orders/{purchaseOrderId}/items/{purchaseOrderItemId}",
+        "path": "/purchase_orders/{purchaseOrderId}/purchase_order_items/{purchaseOrderItemId}",
         "definition": {
           "entityName": "PurchaseOrderItem",
           "schema": {
@@ -1090,7 +1090,7 @@
         }
       },
       {
-        "path": "/returns_to_vendor/{returnToVendorId}/items/{returnToVendorItemId}",
+        "path": "/returns_to_vendor/{returnToVendorId}/return_to_vendor_items/{returnToVendorItemId}",
         "definition": {
           "entityName": "ReturnToVendorItem",
           "schema": {

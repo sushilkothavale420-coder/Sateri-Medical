@@ -12,7 +12,7 @@
  * The data is organized into top-level collections for major entities (e.g.,
  * /medicines, /suppliers, /sales). This flat structure simplifies rule logic and
  * queries. Subcollections are used for items that are tightly coupled to a parent
- * document, such as /sales/{saleId}/items.
+ * document, such as /sales/{saleId}/sale_items.
  *
  * Key Security Decisions:
  * - Default Deny: All access is denied by default. Rules only grant explicit permissions.
@@ -164,7 +164,7 @@ service cloud.firestore {
       /**
        * @description Items within a purchase order.
        */
-      match /items/{purchaseOrderItemId} {
+      match /purchase_order_items/{purchaseOrderItemId} {
         allow get, list: if isAdmin();
         allow create, update, delete: if isAdmin() && exists(/databases/$(database)/documents/purchase_orders/$(purchaseOrderId));
       }
@@ -179,7 +179,7 @@ service cloud.firestore {
       /**
        * @description Items being returned to a vendor.
        */
-      match /items/{returnToVendorItemId} {
+      match /return_to_vendor_items/{returnToVendorItemId} {
         allow get, list: if isAdmin();
         allow create, update, delete: if isAdmin() && exists(/databases/$(database)/documents/returns_to_vendor/$(returnToVendorId));
       }
@@ -221,7 +221,8 @@ service cloud.firestore {
        * @description Items within a sale.
        */
       match /sale_items/{saleItemId} {
-        allow read: if isSignedIn();
+        // `list` is handled by the collection group rule below. `get` is for direct access.
+        allow get: if isSignedIn();
 
         function canAccessParentSale() {
           let parentSale = get(/databases/$(database)/documents/sales/$(saleId)).data;
@@ -259,6 +260,16 @@ service cloud.firestore {
       allow create: if isCreator('requesterUserId') && (isRetailer() || isAdmin());
       allow update: if isExistingDoc() && isParticipant() && isImmutable('requesterUserId');
       allow delete: if false;
+    }
+    
+    // -------------------------------------------------------------------------
+    // Collection Group Rules
+    // -------------------------------------------------------------------------
+    /**
+     * @description Allows collection group query on sale_items for dashboard analytics.
+     */
+    match /{path=**}/sale_items/{saleItemId} {
+      allow list: if isSignedIn();
     }
   }
 }
