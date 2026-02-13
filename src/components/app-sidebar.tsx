@@ -17,8 +17,6 @@ import {
   Users,
   LogOut,
   Warehouse,
-  Truck,
-  ClipboardList,
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/firebase';
@@ -30,8 +28,6 @@ const navItems = [
   { href: '/medicines', icon: Boxes, label: 'Medicines' },
   { href: '/stock', icon: Warehouse, label: 'Stock' },
   { href: '/customers', icon: Users, label: 'Customers' },
-  { href: '/suppliers', icon: Truck, label: 'Suppliers' },
-  { href: '/purchase-orders', icon: ClipboardList, label: 'Purchase Orders' },
 ];
 
 export function AppSidebar() {

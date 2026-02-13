@@ -9,7 +9,7 @@
  *
  * Data Structure:
  * The data is organized into top-level collections for major entities (e.g.,
- * /medicines, /suppliers, /sales). This flat structure simplifies rule logic and
+ * /medicines, /sales). This flat structure simplifies rule logic and
  * queries. Subcollections are used for items that are tightly coupled to a parent
  * document, such as /sales/{saleId}/sale_items.
  *
@@ -102,7 +102,7 @@ service cloud.firestore {
     }
 
     // -------------------------------------------------------------------------
-    // Core Inventory & Supplier Data (Admin Write, Authenticated Read)
+    // Core Inventory Data (Admin Write, Authenticated Read)
     // -------------------------------------------------------------------------
 
     /**
@@ -128,41 +128,6 @@ service cloud.firestore {
       allow get, list: if isSignedIn();
       allow create, update, delete: if isAdmin();
     }
-
-    /**
-     * @description Supplier information. Managed by Admins, readable by all users.
-     */
-    match /suppliers/{supplierId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isAdmin();
-    }
-
-    // -------------------------------------------------------------------------
-    // Procurement (Admin Only)
-    // -------------------------------------------------------------------------
-
-    /**
-     * @description Purchase orders and all related items. Fully managed by Admins.
-     */
-    match /purchase_orders/{purchaseOrderId} {
-      allow read, write: if request.auth != null;
-      
-      match /purchase_order_items/{purchaseOrderItemId} {
-        allow read, write: if request.auth != null;
-      }
-    }
-
-    /**
-     * @description Records for returning medicine to vendors and all related items. Fully managed by Admins.
-     */
-    match /returns_to_vendor/{returnToVendorId} {
-      allow read, write: if request.auth != null;
-
-      match /return_to_vendor_items/{returnToVendorItemId} {
-        allow read, write: if request.auth != null;
-      }
-    }
-
 
     // -------------------------------------------------------------------------
     // Customer and Sales Management

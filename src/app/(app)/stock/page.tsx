@@ -82,7 +82,6 @@ export default function StockManagementPage() {
       expiryDate: format(values.expiryDate, 'yyyy-MM-dd'),
       quantityInSmallestUnits,
       purchasePricePerSmallestUnit: values.purchasePricePerSmallestUnit,
-      supplierId: 'direct-entry', // Placeholder
       receivedAt: new Date().toISOString(),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),

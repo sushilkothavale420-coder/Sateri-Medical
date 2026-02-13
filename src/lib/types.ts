@@ -36,7 +36,6 @@ export type Batch = {
   expiryDate: string;
   quantityInSmallestUnits: number;
   purchasePricePerSmallestUnit: number;
-  supplierId: string;
   receivedAt: any;
   createdAt: any;
   updatedAt: any;
@@ -62,21 +61,6 @@ export type Customer = z.infer<typeof customerSchema> & {
   debtAmount: number;
   createdAt: any;
   updatedAt: any;
-};
-
-export const supplierSchema = z.object({
-    name: z.string().min(1, "Name is required."),
-    contactPerson: z.string().optional(),
-    phoneNumber: z.string().optional(),
-    email: z.string().email("Invalid email address.").optional().or(z.literal('')),
-    address: z.string().optional(),
-});
-
-export type Supplier = z.infer<typeof supplierSchema> & {
-    id: string;
-    accountPayableBalance: number;
-    createdAt: any;
-    updatedAt: any;
 };
 
 export const saleSchema = z.object({
@@ -116,35 +100,6 @@ export type SaleItem = z.infer<typeof saleItemSchema> & {
   id: string;
   createdAt: any;
 };
-
-export const purchaseOrderSchema = z.object({
-    supplierId: z.string().min(1, "Supplier is required."),
-    orderDate: z.string(),
-    status: z.string(), // e.g., 'Pending', 'Ordered', 'Received'
-    totalAmount: z.coerce.number(),
-    createdByUserId: z.string(),
-  });
-  
-  export type PurchaseOrder = z.infer<typeof purchaseOrderSchema> & {
-    id: string;
-    supplierName?: string; // For display
-    createdAt: any;
-    updatedAt: any;
-  };
-  
-  export const purchaseOrderItemSchema = z.object({
-    purchaseOrderId: z.string(),
-    medicineId: z.string(),
-    requestedQuantity: z.coerce.number().min(1, "Quantity must be at least 1."),
-    unitPriceAtOrder: z.coerce.number().min(0, "Price must be non-negative."),
-    totalPrice: z.coerce.number(),
-  });
-  
-  export type PurchaseOrderItem = z.infer<typeof purchaseOrderItemSchema> & {
-    id: string;
-    createdAt: any;
-    updatedAt: any;
-  };
 
 export const publicMedicineRequestSchema = z.object({
   name: z.string().min(1, "Name is required."),

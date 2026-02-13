@@ -193,10 +193,6 @@
           "type": "number",
           "description": "The cost price for each smallest unit of medicine in this specific batch when purchased."
         },
-        "supplierId": {
-          "type": "string",
-          "description": "Reference to Supplier, who supplied this batch. (Relationship: Supplier 1:N Batch)"
-        },
         "receivedAt": {
           "type": "string",
           "description": "Timestamp when this medicine batch was received into inventory.",
@@ -221,167 +217,7 @@
         "expiryDate",
         "quantityInSmallestUnits",
         "purchasePricePerSmallestUnit",
-        "supplierId",
         "receivedAt",
-        "createdAt",
-        "updatedAt"
-      ]
-    },
-    "Supplier": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Supplier",
-      "type": "object",
-      "description": "Manages information about medicine suppliers/vendors for procurement and returns.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Supplier entity."
-        },
-        "name": {
-          "type": "string",
-          "description": "The name of the supplier or vendor company."
-        },
-        "contactPerson": {
-          "type": "string",
-          "description": "The name of the primary contact person at the supplier."
-        },
-        "phoneNumber": {
-          "type": "string",
-          "description": "The contact phone number for the supplier."
-        },
-        "email": {
-          "type": "string",
-          "description": "The email address for the supplier.",
-          "format": "email"
-        },
-        "address": {
-          "type": "string",
-          "description": "The physical address of the supplier."
-        },
-        "accountPayableBalance": {
-          "type": "number",
-          "description": "The current outstanding amount owed to this supplier."
-        },
-        "createdAt": {
-          "type": "string",
-          "description": "Timestamp when the supplier record was created.",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "description": "Timestamp when the supplier record was last updated.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "name",
-        "accountPayableBalance",
-        "createdAt",
-        "updatedAt"
-      ]
-    },
-    "PurchaseOrder": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "PurchaseOrder",
-      "type": "object",
-      "description": "Represents an order placed with a supplier for replenishing medicine stock, often triggered by ROP alerts.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the PurchaseOrder entity."
-        },
-        "supplierId": {
-          "type": "string",
-          "description": "Reference to Supplier. (Relationship: Supplier 1:N PurchaseOrder)"
-        },
-        "orderDate": {
-          "type": "string",
-          "description": "The date and time the purchase order was created or placed.",
-          "format": "date-time"
-        },
-        "status": {
-          "type": "string",
-          "description": "The current status of the purchase order (e.g., 'Pending', 'Ordered', 'Received', 'Cancelled')."
-        },
-        "totalAmount": {
-          "type": "number",
-          "description": "The calculated total monetary amount of the purchase order."
-        },
-        "createdByUserId": {
-          "type": "string",
-          "description": "Reference to User who created this purchase order. (Relationship: User 1:N PurchaseOrder)"
-        },
-        "createdAt": {
-          "type": "string",
-          "description": "Timestamp when the purchase order record was created.",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "description": "Timestamp when the purchase order record was last updated.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "supplierId",
-        "orderDate",
-        "status",
-        "totalAmount",
-        "createdByUserId",
-        "createdAt",
-        "updatedAt"
-      ]
-    },
-    "PurchaseOrderItem": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "PurchaseOrderItem",
-      "type": "object",
-      "description": "Details of a single medicine item included in a purchase order.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the PurchaseOrderItem entity."
-        },
-        "purchaseOrderId": {
-          "type": "string",
-          "description": "Reference to PurchaseOrder. (Relationship: PurchaseOrder 1:N PurchaseOrderItem)"
-        },
-        "medicineId": {
-          "type": "string",
-          "description": "Reference to Medicine. (Relationship: Medicine 1:N PurchaseOrderItem)"
-        },
-        "requestedQuantity": {
-          "type": "number",
-          "description": "The quantity of medicine requested in this item, in its smallest units."
-        },
-        "unitPriceAtOrder": {
-          "type": "number",
-          "description": "The agreed unit price (per smallest unit) for this medicine at the time of placing the order."
-        },
-        "totalPrice": {
-          "type": "number",
-          "description": "The total price for this specific line item (quantity * unitPriceAtOrder)."
-        },
-        "createdAt": {
-          "type": "string",
-          "description": "Timestamp when the purchase order item record was created.",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "description": "Timestamp when the purchase order item record was last updated.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "purchaseOrderId",
-        "medicineId",
-        "requestedQuantity",
-        "unitPriceAtOrder",
-        "totalPrice",
         "createdAt",
         "updatedAt"
       ]
@@ -640,115 +476,6 @@
         "createdAt"
       ]
     },
-    "ReturnToVendor": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "ReturnToVendor",
-      "type": "object",
-      "description": "Records details of medicine batches returned to a supplier due to expiry, damage, or other reasons.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the ReturnToVendor entity."
-        },
-        "supplierId": {
-          "type": "string",
-          "description": "Reference to Supplier to whom the items are being returned. (Relationship: Supplier 1:N ReturnToVendor)"
-        },
-        "returnDate": {
-          "type": "string",
-          "description": "The date and time when the return to vendor was initiated or processed.",
-          "format": "date-time"
-        },
-        "reason": {
-          "type": "string",
-          "description": "The reason for returning the items (e.g., 'Expired', 'Damaged', 'Overstock')."
-        },
-        "totalCreditExpected": {
-          "type": "number",
-          "description": "The total monetary value of the items being returned, expected as a credit from the supplier."
-        },
-        "status": {
-          "type": "string",
-          "description": "The current status of the return process (e.g., 'Pending', 'Completed', 'Cancelled')."
-        },
-        "createdByUserId": {
-          "type": "string",
-          "description": "Reference to User who initiated the return to vendor. (Relationship: User 1:N ReturnToVendor)"
-        },
-        "createdAt": {
-          "type": "string",
-          "description": "Timestamp when the return to vendor record was created.",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "description": "Timestamp when the return to vendor record was last updated.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "supplierId",
-        "returnDate",
-        "reason",
-        "totalCreditExpected",
-        "status",
-        "createdByUserId",
-        "createdAt",
-        "updatedAt"
-      ]
-    },
-    "ReturnToVendorItem": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "ReturnToVendorItem",
-      "type": "object",
-      "description": "Details of a single medicine item included in a return to vendor transaction.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the ReturnToVendorItem entity."
-        },
-        "returnToVendorId": {
-          "type": "string",
-          "description": "Reference to ReturnToVendor. (Relationship: ReturnToVendor 1:N ReturnToVendorItem)"
-        },
-        "medicineId": {
-          "type": "string",
-          "description": "Reference to Medicine. (Relationship: Medicine 1:N ReturnToVendorItem)"
-        },
-        "batchId": {
-          "type": "string",
-          "description": "Reference to Batch, indicating which specific batch of the medicine was returned. (Relationship: Batch 1:N ReturnToVendorItem)"
-        },
-        "quantityReturned": {
-          "type": "number",
-          "description": "The quantity of medicine items returned, in its smallest units."
-        },
-        "unitCreditValue": {
-          "type": "number",
-          "description": "The monetary value per smallest unit expected as credit from the supplier for this returned item."
-        },
-        "itemTotalCreditValue": {
-          "type": "number",
-          "description": "The total monetary value for this specific line item being returned (quantityReturned * unitCreditValue)."
-        },
-        "createdAt": {
-          "type": "string",
-          "description": "Timestamp when the return to vendor item record was created.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "returnToVendorId",
-        "medicineId",
-        "batchId",
-        "quantityReturned",
-        "unitCreditValue",
-        "itemTotalCreditValue",
-        "createdAt"
-      ]
-    },
     "StockAdjustmentLog": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "StockAdjustmentLog",
@@ -934,58 +661,6 @@
         }
       },
       {
-        "path": "/suppliers/{supplierId}",
-        "definition": {
-          "entityName": "Supplier",
-          "schema": {
-            "$ref": "#/backend/entities/Supplier"
-          },
-          "description": "Information about medicine suppliers/vendors. Only Admin can manage.",
-          "params": [
-            {
-              "name": "supplierId",
-              "description": "The unique ID of the supplier."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/purchase_orders/{purchaseOrderId}",
-        "definition": {
-          "entityName": "PurchaseOrder",
-          "schema": {
-            "$ref": "#/backend/entities/PurchaseOrder"
-          },
-          "description": "Orders placed with suppliers for stock replenishment. Includes 'createdByUserId' (Admin UID) for authorization. Only Admin can manage.",
-          "params": [
-            {
-              "name": "purchaseOrderId",
-              "description": "The unique ID of the purchase order."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/purchase_orders/{purchaseOrderId}/purchase_order_items/{purchaseOrderItemId}",
-        "definition": {
-          "entityName": "PurchaseOrderItem",
-          "schema": {
-            "$ref": "#/backend/entities/PurchaseOrderItem"
-          },
-          "description": "Details of specific medicine items within a purchase order. Includes denormalized 'purchaseOrderId' and 'purchaseOrderCreatedByUserId' (Admin UID) for authorization independence.",
-          "params": [
-            {
-              "name": "purchaseOrderId",
-              "description": "The unique ID of the parent purchase order."
-            },
-            {
-              "name": "purchaseOrderItemId",
-              "description": "The unique ID of the purchase order item."
-            }
-          ]
-        }
-      },
-      {
         "path": "/customers/{customerId}",
         "definition": {
           "entityName": "Customer",
@@ -1058,42 +733,6 @@
         }
       },
       {
-        "path": "/returns_to_vendor/{returnToVendorId}",
-        "definition": {
-          "entityName": "ReturnToVendor",
-          "schema": {
-            "$ref": "#/backend/entities/ReturnToVendor"
-          },
-          "description": "Records of medicine batches returned to suppliers. Includes 'createdByUserId' (Admin UID) for authorization. Only Admin can manage.",
-          "params": [
-            {
-              "name": "returnToVendorId",
-              "description": "The unique ID of the return to vendor record."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/returns_to_vendor/{returnToVendorId}/return_to_vendor_items/{returnToVendorItemId}",
-        "definition": {
-          "entityName": "ReturnToVendorItem",
-          "schema": {
-            "$ref": "#/backend/entities/ReturnToVendorItem"
-          },
-          "description": "Details of individual medicine items within a return to vendor transaction. Includes denormalized 'returnToVendorId' and 'returnCreatedByUserId' (Admin UID) for authorization independence.",
-          "params": [
-            {
-              "name": "returnToVendorId",
-              "description": "The unique ID of the parent return to vendor record."
-            },
-            {
-              "name": "returnToVendorItemId",
-              "description": "The unique ID of the return to vendor item."
-            }
-          ]
-        }
-      },
-      {
         "path": "/stock_adjustment_logs/{logId}",
         "definition": {
           "entityName": "StockAdjustmentLog",
@@ -1126,6 +765,6 @@
         }
       }
     ],
-    "reasoning": "The proposed Firestore structure for 'Sateri Medical' prioritizes security, scalability, and debuggability by adhering to the core design principles, especially Authorization Independence and Structural Segregation. The design leverages top-level collections for universally accessible or globally managed entities and subcollections for tightly coupled transactional or itemized data. Authorization relies on a Role-Based Access Control (RBAC) model, where a user's role ('Admin') is stored in their respective `/users/{userId}` document. Security rules will fetch this role to determine read/write permissions across collections.\n\nAuthorization Independence is achieved primarily through denormalization. For subcollections that conceptually depend on a parent document's authorization context (e.g., `PurchaseOrderItem` needing the `PurchaseOrder`'s creator's permissions), the necessary authorization fields (like `createdByUserId` from the parent) are explicitly copied into each subcollection document (e.g., `purchaseOrderCreatedByUserId` in `PurchaseOrderItem`). This eliminates the need for `get()` calls in Firestore Security Rules to retrieve parent documents for authorization checks. This approach ensures that atomic operations (transactions/batches) involving parent and child documents remain secure and do not encounter `get()`-related rule evaluation issues.\n\nQueryability and Authorization (QAPs - Rules are not Filters) are supported by segregating data based on its security posture:\n\n1.  **Globally Accessible (with Role-Based Write):** Collections like `/medicine_compositions`, `/medicines`, `/batches`, and `/suppliers` are designed to be globally readable by all authenticated 'Admin' users. Write access to these collections is restricted to 'Admin' users only. This homogeneous security posture allows for efficient `list` queries (e.g., listing all medicines) without requiring complex `where` clauses for authorization, as the rules already ensure only authorized users can perform these operations.\n\n2.  **User-Owned/Context-Specific Data:** Collections such as `/sales`, `/purchase_orders`, `/returns_to_vendor`, and `/stock_adjustment_logs` contain a `createdByUserId` or similar field explicitly linking them to the creating user (Admin). For example, an 'Admin' can `list` their own sales from `/sales` because the rules will enforce `request.auth.uid == resource.data.createdByUserId` for write operations and allow reads for specific users or admins globally. This design ensures that a user can only access documents they are authorized for directly through a field in the document, without filtering the query results in the rules.\n\n3.  **Customer Management:** `/customers` is a top-level collection managed by 'Admin', with reads for all authenticated users. `CustomerAccountTransaction`s are subcollections under a specific customer, containing `createdByUserId` to track which Admin processed the transaction."
+    "reasoning": "The proposed Firestore structure for 'Sateri Medical' prioritizes security, scalability, and debuggability by adhering to the core design principles, especially Authorization Independence and Structural Segregation. The design leverages top-level collections for universally accessible or globally managed entities and subcollections for tightly coupled transactional or itemized data. Authorization relies on a Role-Based Access Control (RBAC) model, where a user's role ('Admin') is stored in their respective `/users/{userId}` document. Security rules will fetch this role to determine read/write permissions across collections.\n\nAuthorization Independence is achieved primarily through denormalization. For subcollections that conceptually depend on a parent document's authorization context (e.g., `PurchaseOrderItem` needing the `PurchaseOrder`'s creator's permissions), the necessary authorization fields (like `createdByUserId` from the parent) are explicitly copied into each subcollection document (e.g., `purchaseOrderCreatedByUserId` in `PurchaseOrderItem`). This eliminates the need for `get()` calls in Firestore Security Rules to retrieve parent documents for authorization checks. This approach ensures that atomic operations (transactions/batches) involving parent and child documents remain secure and do not encounter `get()`-related rule evaluation issues.\n\nQueryability and Authorization (QAPs - Rules are not Filters) are supported by segregating data based on its security posture:\n\n1.  **Globally Accessible (with Role-Based Write):** Collections like `/medicine_compositions`, `/medicines`, and `/batches` are designed to be globally readable by all authenticated 'Admin' users. Write access to these collections is restricted to 'Admin' users only. This homogeneous security posture allows for efficient `list` queries (e.g., listing all medicines) without requiring complex `where` clauses for authorization, as the rules already ensure only authorized users can perform these operations.\n\n2.  **User-Owned/Context-Specific Data:** Collections such as `/sales` and `/stock_adjustment_logs` contain a `createdByUserId` or similar field explicitly linking them to the creating user (Admin). For example, an 'Admin' can `list` their own sales from `/sales` because the rules will enforce `request.auth.uid == resource.data.createdByUserId` for write operations and allow reads for specific users or admins globally. This design ensures that a user can only access documents they are authorized for directly through a field in the document, without filtering the query results in the rules.\n\n3.  **Customer Management:** `/customers` is a top-level collection managed by 'Admin', with reads for all authenticated users. `CustomerAccountTransaction`s are subcollections under a specific customer, containing `createdByUserId` to track which Admin processed the transaction."
   }
 }
