@@ -64,6 +64,21 @@ export type Customer = z.infer<typeof customerSchema> & {
   updatedAt: any;
 };
 
+export const supplierSchema = z.object({
+    name: z.string().min(1, "Name is required."),
+    contactPerson: z.string().optional(),
+    phoneNumber: z.string().optional(),
+    email: z.string().email("Invalid email address.").optional().or(z.literal('')),
+    address: z.string().optional(),
+});
+
+export type Supplier = z.infer<typeof supplierSchema> & {
+    id: string;
+    accountPayableBalance: number;
+    createdAt: any;
+    updatedAt: any;
+};
+
 export const saleSchema = z.object({
   saleDate: z.string(),
   customerId: z.string().optional(),
