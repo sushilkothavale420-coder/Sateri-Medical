@@ -89,6 +89,7 @@ export const saleItemSchema = z.object({
   itemTotalBeforeTax: z.number(),
   itemTaxAmount: z.number(),
   itemTotalWithTax: z.number(),
+  createdByUserId: z.string(),
 });
 
 export type SaleItem = z.infer<typeof saleItemSchema> & {

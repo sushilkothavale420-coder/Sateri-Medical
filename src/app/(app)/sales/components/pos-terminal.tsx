@@ -149,6 +149,7 @@ export function PosTerminal() {
           itemTotalBeforeTax: item.price,
           itemTaxAmount: item.price * ((item.medicine.taxRateGst || 0) / 100),
           itemTotalWithTax: item.price * (1 + ((item.medicine.taxRateGst || 0) / 100)),
+          createdByUserId: user.uid,
           createdAt: serverTimestamp(),
         };
         batch.set(saleItemRef, saleItemData);

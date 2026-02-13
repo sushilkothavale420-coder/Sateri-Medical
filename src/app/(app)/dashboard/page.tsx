@@ -60,8 +60,16 @@ export default function DashboardPage() {
   const { data: customers, isLoading: isLoadingCustomers } = useCollection<Customer>(customersQuery);
 
   const saleItemsQuery = useMemoFirebase(
-    () => (firestore ? collectionGroup(firestore, 'sale_items') : null),
-    [firestore]
+    () => {
+      if (!firestore || !user) return null;
+      const saleItemsCollectionGroup = collectionGroup(firestore, 'sale_items');
+      if (isAdmin) {
+        return saleItemsCollectionGroup;
+      } else {
+        return query(saleItemsCollectionGroup, where('createdByUserId', '==', user.uid));
+      }
+    },
+    [firestore, user, isAdmin]
   );
   const { data: saleItems, isLoading: isLoadingSaleItems } = useCollection<SaleItem>(saleItemsQuery);
 
