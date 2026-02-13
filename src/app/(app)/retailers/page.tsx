@@ -3,25 +3,38 @@
 import { Header } from '@/components/header';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
-import { collection, query, where } from 'firebase/firestore';
-import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { useFirestore, useUser } from '@/firebase';
 import { UserProfile } from '@/lib/types';
 import { RetailersDataTable } from './components/retailers-data-table';
 import { columns } from './components/columns';
 import { AddRetailerDialog } from './components/add-retailer-dialog';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function RetailersPage() {
   const firestore = useFirestore();
   const { user } = useUser();
   const [isAddDialogOpen, setAddDialogOpen] = useState(false);
+  const [retailers, setRetailers] = useState<UserProfile[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const retailersQuery = useMemoFirebase(
-    () => (firestore ? query(collection(firestore, 'users'), where('role', '==', 'Retailer')) : null),
-    [firestore]
-  );
-  
-  const { data: retailers, isLoading } = useCollection<UserProfile>(retailersQuery);
+  useEffect(() => {
+    if (!firestore) return;
+    const fetchRetailers = async () => {
+      setIsLoading(true);
+      try {
+        const retailersQuery = query(collection(firestore, 'users'), where('role', '==', 'Retailer'));
+        const querySnapshot = await getDocs(retailersQuery);
+        const retailersData = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as UserProfile[];
+        setRetailers(retailersData);
+      } catch (error) {
+        console.error("Error fetching retailers:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchRetailers();
+  }, [firestore]);
 
   const isAdmin = user?.uid === 'a6jWnMQZfLY82mBA3g0DIMxYRFZ2';
 
@@ -45,9 +58,9 @@ export default function RetailersPage() {
           )}
         </div>
         
-        {isLoading && <p>Loading retailers...</p>}
-
-        {retailers && (
+        {isLoading ? (
+          <p>Loading retailers...</p>
+        ) : (
           <RetailersDataTable columns={columns} data={retailers} />
         )}
       </main>

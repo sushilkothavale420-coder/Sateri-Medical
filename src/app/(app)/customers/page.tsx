@@ -3,13 +3,13 @@
 import { Header } from '@/components/header';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
-import { collection } from 'firebase/firestore';
-import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
+import { collection, getDocs } from 'firebase/firestore';
+import { useFirestore, useUser } from '@/firebase';
 import { Customer } from '@/lib/types';
 import { CustomersDataTable } from './components/customers-data-table';
 import { Columns } from './components/columns';
 import { AddCustomerDialog } from './components/add-customer-dialog';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DeleteCustomerDialog } from './components/delete-customer-dialog';
 import { EditCustomerDialog } from './components/edit-customer-dialog';
 
@@ -17,6 +17,8 @@ export default function CustomersPage() {
   const firestore = useFirestore();
   const { user } = useUser();
   const [isAddDialogOpen, setAddDialogOpen] = useState(false);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const { 
     columns, 
@@ -27,12 +29,23 @@ export default function CustomersPage() {
     selectedCustomer
   } = Columns();
 
-  const customersQuery = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'customers') : null),
-    [firestore]
-  );
-  
-  const { data: customers, isLoading } = useCollection<Customer>(customersQuery);
+  useEffect(() => {
+    if (!firestore) return;
+    const fetchCustomers = async () => {
+      setIsLoading(true);
+      try {
+        const querySnapshot = await getDocs(collection(firestore, 'customers'));
+        const customersData = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as Customer[];
+        setCustomers(customersData);
+      } catch (error) {
+        console.error("Error fetching customers: ", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchCustomers();
+  }, [firestore]);
+
 
   const isAdmin = user?.uid === 'a6jWnMQZfLY82mBA3g0DIMxYRFZ2';
 
@@ -56,9 +69,9 @@ export default function CustomersPage() {
           )}
         </div>
         
-        {isLoading && <p>Loading customers...</p>}
-
-        {customers && (
+        {isLoading ? (
+            <p>Loading customers...</p>
+        ) : (
           <CustomersDataTable columns={columns} data={customers} />
         )}
 

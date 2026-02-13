@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Header } from '@/components/header';
 import { Button } from '@/components/ui/button';
-import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { useFirestore, useUser } from '@/firebase';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Medicine, stockEntrySchema, type StockEntry } from '@/lib/types';
-import { collection } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,12 +26,26 @@ export default function StockManagementPage() {
   const { toast } = useToast();
   const [open, setOpen] = useState(false)
   const [selectedMedicine, setSelectedMedicine] = useState<Medicine | null>(null);
+  const [medicines, setMedicines] = useState<Medicine[]>([]);
+  const [isLoadingMedicines, setIsLoadingMedicines] = useState(true);
 
-  const medicinesQuery = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'medicines') : null),
-    [firestore]
-  );
-  const { data: medicines, isLoading: isLoadingMedicines } = useCollection<Medicine>(medicinesQuery);
+  useEffect(() => {
+    if (!firestore) return;
+    const fetchMedicines = async () => {
+      setIsLoadingMedicines(true);
+      try {
+        const querySnapshot = await getDocs(collection(firestore, 'medicines'));
+        const medicinesData = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as Medicine[];
+        setMedicines(medicinesData);
+      } catch (error) {
+        console.error("Error fetching medicines:", error);
+      } finally {
+        setIsLoadingMedicines(false);
+      }
+    };
+    fetchMedicines();
+  }, [firestore]);
+
 
   const form = useForm<StockEntry>({
     resolver: zodResolver(stockEntrySchema),

@@ -3,13 +3,13 @@
 import { Header } from '@/components/header';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
-import { collection } from 'firebase/firestore';
-import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
+import { collection, getDocs } from 'firebase/firestore';
+import { useFirestore, useUser } from '@/firebase';
 import { Medicine } from '@/lib/types';
 import { MedicinesDataTable } from './components/medicines-data-table';
 import { Columns } from './components/columns';
 import { AddMedicineDialog } from './components/add-medicine-dialog';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DeleteMedicineDialog } from './components/delete-medicine-dialog';
 import { EditMedicineDialog } from './components/edit-medicine-dialog';
 
@@ -17,6 +17,8 @@ export default function MedicinesPage() {
   const firestore = useFirestore();
   const { user } = useUser();
   const [isAddDialogOpen, setAddDialogOpen] = useState(false);
+  const [medicines, setMedicines] = useState<Medicine[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const { 
     columns, 
@@ -26,13 +28,24 @@ export default function MedicinesPage() {
     setDeleteOpen, 
     selectedMedicine 
   } = Columns();
-
-  const medicinesQuery = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'medicines') : null),
-    [firestore]
-  );
   
-  const { data: medicines, isLoading } = useCollection<Medicine>(medicinesQuery);
+  useEffect(() => {
+    if (!firestore) return;
+    const fetchMedicines = async () => {
+      setIsLoading(true);
+      try {
+        const querySnapshot = await getDocs(collection(firestore, 'medicines'));
+        const medicinesData = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as Medicine[];
+        setMedicines(medicinesData);
+      } catch (error) {
+        console.error("Error fetching medicines:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchMedicines();
+  }, [firestore]);
+
 
   const isAdmin = user?.uid === 'a6jWnMQZfLY82mBA3g0DIMxYRFZ2';
 
@@ -56,10 +69,10 @@ export default function MedicinesPage() {
           )}
         </div>
         
-        {isLoading && <p>Loading medicines...</p>}
-
-        {medicines && (
-          <MedicinesDataTable columns={columns} data={medicines} />
+        {isLoading ? (
+            <p>Loading medicines...</p>
+        ) : (
+            <MedicinesDataTable columns={columns} data={medicines} />
         )}
 
         {selectedMedicine && (
