@@ -45,9 +45,24 @@ export function EditMedicineDialog({
   const { toast } = useToast();
   const form = useForm<EditMedicineFormValues>({
     resolver: zodResolver(medicineSchema),
+    // Initialize form with defaultValues to prevent uncontrolled-to-controlled error
+    defaultValues: {
+      name: medicine?.name || '',
+      composition: medicine?.composition || '',
+      category: medicine?.category || '',
+      company: medicine?.company || '',
+      basePurchasePrice: medicine?.basePurchasePrice || 0,
+      baseSellingPrice: medicine?.baseSellingPrice || 0,
+      smallestUnitName: medicine?.smallestUnitName || '',
+      unitsPerBulk: medicine?.unitsPerBulk || 0,
+      bulkUnitName: medicine?.bulkUnitName || '',
+      reorderPoint: medicine?.reorderPoint ?? 0, // Fallback for optional number
+      taxRateGst: medicine?.taxRateGst ?? 0, // Fallback for optional number
+    }
   });
 
   useEffect(() => {
+    // Reset form when a new medicine is passed or dialog is opened
     if (medicine && isOpen) {
       form.reset({
         name: medicine.name,
@@ -59,11 +74,11 @@ export function EditMedicineDialog({
         smallestUnitName: medicine.smallestUnitName,
         unitsPerBulk: medicine.unitsPerBulk,
         bulkUnitName: medicine.bulkUnitName,
-        reorderPoint: medicine.reorderPoint,
-        taxRateGst: medicine.taxRateGst,
+        reorderPoint: medicine.reorderPoint ?? 0,
+        taxRateGst: medicine.taxRateGst ?? 0,
       });
     }
-  }, [medicine, form, isOpen]);
+  }, [medicine, isOpen, form]);
 
   async function onSubmit(values: EditMedicineFormValues) {
     if (!firestore || !medicine.id) return;
