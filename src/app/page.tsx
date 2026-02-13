@@ -4,10 +4,25 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from '@/components/ui/carousel';
+import Autoplay from 'embla-carousel-autoplay';
+import Image from 'next/image';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
+import React from 'react';
 
 export default function HomePage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
+
+  const plugin = React.useRef(
+    Autoplay({ delay: 3000, stopOnInteraction: true })
+  );
 
   if (isUserLoading) {
     return (
@@ -23,14 +38,51 @@ export default function HomePage() {
   }
   
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-background">
-      <div className="w-full max-w-4xl text-center">
-        <h1 className="text-5xl font-headline text-primary mb-4">
-          Welcome to Sateri Medical
-        </h1>
-        <p className="text-lg text-muted-foreground mb-12">
-          Your all-in-one solution for efficient pharmacy management. Streamline your inventory, sales, and customer relations with our powerful tools.
-        </p>
+    <main className="flex min-h-screen flex-col items-center p-8 bg-background">
+      <div className="w-full max-w-6xl">
+
+        <div className="mb-12">
+            <Carousel
+              plugins={[plugin.current]}
+              className="w-full"
+              onMouseEnter={plugin.current.stop}
+              onMouseLeave={plugin.current.reset}
+              opts={{
+                loop: true,
+              }}
+            >
+              <CarouselContent>
+                {PlaceHolderImages.map((img) => (
+                  <CarouselItem key={img.id}>
+                    <div className="p-1">
+                      <Card>
+                        <CardContent className="relative flex aspect-[3/2] items-center justify-center p-0 overflow-hidden rounded-lg">
+                          <Image
+                            src={img.imageUrl}
+                            alt={img.description}
+                            fill
+                            className="object-cover"
+                            data-ai-hint={img.imageHint}
+                          />
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
+        </div>
+
+        <div className="text-center">
+            <h1 className="text-5xl font-headline text-primary mb-4">
+            Welcome to Sateri Medical
+            </h1>
+            <p className="text-lg text-muted-foreground mb-12">
+            Your all-in-one solution for efficient pharmacy management. Streamline your inventory, sales, and customer relations with our powerful tools.
+            </p>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
           <Card>
