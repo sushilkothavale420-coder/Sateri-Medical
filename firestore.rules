@@ -144,15 +144,23 @@ service cloud.firestore {
     /**
      * @description Purchase orders and all related items. Fully managed by Admins.
      */
-    match /purchase_orders/{document=**} {
+    match /purchase_orders/{purchaseOrderId} {
       allow read, write: if request.auth != null;
+      
+      match /purchase_order_items/{purchaseOrderItemId} {
+        allow read, write: if request.auth != null;
+      }
     }
 
     /**
      * @description Records for returning medicine to vendors and all related items. Fully managed by Admins.
      */
-    match /returns_to_vendor/{document=**} {
+    match /returns_to_vendor/{returnToVendorId} {
       allow read, write: if request.auth != null;
+
+      match /return_to_vendor_items/{returnToVendorItemId} {
+        allow read, write: if request.auth != null;
+      }
     }
 
 
