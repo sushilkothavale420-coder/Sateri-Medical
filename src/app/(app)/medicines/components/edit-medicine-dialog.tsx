@@ -52,10 +52,10 @@ export function EditMedicineDialog({
     if (medicine && isOpen) {
       form.reset({
         ...medicine,
-        tabletsPerStrip: medicine.tabletsPerStrip ?? undefined,
-        stripsPerBox: medicine.stripsPerBox ?? undefined,
-        reorderPoint: medicine.reorderPoint ?? undefined,
-        taxRateGst: medicine.taxRateGst ?? undefined,
+        tabletsPerStrip: medicine.tabletsPerStrip ?? null,
+        stripsPerBox: medicine.stripsPerBox ?? null,
+        reorderPoint: medicine.reorderPoint ?? ('' as any),
+        taxRateGst: medicine.taxRateGst ?? ('' as any),
       });
     }
   }, [medicine, isOpen, form]);

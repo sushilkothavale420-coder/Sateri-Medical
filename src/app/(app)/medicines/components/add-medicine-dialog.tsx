@@ -46,12 +46,12 @@ export function AddMedicineDialog({ children, isOpen, onOpenChange }: AddMedicin
       compositionId: '',
       category: '',
       company: '',
-      basePurchasePrice: undefined,
-      baseSellingPrice: undefined,
-      tabletsPerStrip: undefined,
-      stripsPerBox: undefined,
-      reorderPoint: undefined,
-      taxRateGst: undefined,
+      basePurchasePrice: '' as any,
+      baseSellingPrice: '' as any,
+      tabletsPerStrip: null,
+      stripsPerBox: null,
+      reorderPoint: '' as any,
+      taxRateGst: '' as any,
     },
   });
 

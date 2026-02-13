@@ -3,8 +3,8 @@
 import { useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useFirestore, useDoc, useCollection, useMemoFirebase, useUser } from '@/firebase';
-import { Customer, Sale } from '@/lib/types';
-import { doc, collection, query, where, writeBatch } from 'firebase/firestore';
+import { Customer, Sale, CustomerAccountTransaction } from '@/lib/types';
+import { doc, collection, query, where, writeBatch, orderBy } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, FileText, IndianRupee, Mail, Phone } from 'lucide-react';
@@ -33,6 +33,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+
 
 const paymentSchema = z.object({
   amount: z.coerce.number().positive("Amount must be a positive number."),
@@ -56,10 +58,13 @@ export default function CustomerDetailPage() {
 
   const salesQuery = useMemoFirebase(() => (firestore && customerId ? query(collection(firestore, 'sales'), where('customerId', '==', customerId)) : null), [firestore, customerId]);
   const { data: sales, isLoading: areSalesLoading } = useCollection<Sale>(salesQuery);
+
+  const transactionsQuery = useMemoFirebase(() => (firestore && customerId ? query(collection(firestore, 'customers', customerId, 'transactions'), orderBy('transactionDate', 'desc')) : null), [firestore, customerId]);
+  const { data: transactions, isLoading: areTransactionsLoading } = useCollection<CustomerAccountTransaction>(transactionsQuery);
   
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(paymentSchema),
-    defaultValues: { amount: undefined, notes: '' },
+    defaultValues: { amount: '' as any, notes: '' },
   });
 
   const formatCurrency = (amount: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount);
@@ -109,7 +114,7 @@ export default function CustomerDetailPage() {
     }
   };
 
-  if (isCustomerLoading || areSalesLoading) {
+  if (isCustomerLoading || areSalesLoading || areTransactionsLoading) {
     return <div className="flex items-center justify-center h-full p-8"><p>Loading customer details...</p></div>;
   }
 
@@ -217,7 +222,7 @@ export default function CustomerDetailPage() {
             </Card>
         </div>
 
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 space-y-8">
             <Card>
                 <CardHeader>
                     <CardTitle>Purchase History</CardTitle>
@@ -231,8 +236,8 @@ export default function CustomerDetailPage() {
                                     <AccordionTrigger className="hover:no-underline">
                                         <div className="flex justify-between w-full pr-4 items-center">
                                             <div className="flex flex-col text-left">
-                                                <span className="font-semibold">{sale.invoiceNumber}</span>
-                                                <span className="text-sm text-muted-foreground">{format(new Date(sale.saleDate), 'PPP')}</span>
+                                                <span className="font-semibold">Sale Details</span>
+                                                <span className="text-sm text-muted-foreground">{format(new Date(sale.saleDate), 'PPP, p')}</span>
                                             </div>
                                             <div className="flex items-center gap-4">
                                                 <Badge variant={sale.balanceDue > 0 ? "destructive" : "secondary"}>{sale.paymentMethod}</Badge>
@@ -251,6 +256,43 @@ export default function CustomerDetailPage() {
                     </Accordion>
                 </CardContent>
             </Card>
+
+            <Card>
+              <CardHeader>
+                  <CardTitle>Transaction History</CardTitle>
+                  <CardDescription>A record of all payments and credits for this customer.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                  <Table>
+                      <TableHeader>
+                          <TableRow>
+                              <TableHead>Date</TableHead>
+                              <TableHead>Type</TableHead>
+                              <TableHead>Notes</TableHead>
+                              <TableHead className="text-right">Amount</TableHead>
+                          </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                          {transactions && transactions.length > 0 ? (
+                              transactions.map(tx => (
+                                  <TableRow key={tx.id}>
+                                      <TableCell>{format(new Date(tx.transactionDate), 'PPP')}</TableCell>
+                                      <TableCell><Badge variant={tx.type === 'Payment' ? 'secondary' : 'outline'}>{tx.type}</Badge></TableCell>
+                                      <TableCell className="text-sm text-muted-foreground">{tx.description}</TableCell>
+                                      <TableCell className="text-right font-medium">{formatCurrency(tx.amount)}</TableCell>
+                                  </TableRow>
+                              ))
+                          ) : (
+                              <TableRow>
+                                  <TableCell colSpan={4} className="h-24 text-center">
+                                      No transactions found.
+                                  </TableCell>
+                              </TableRow>
+                          )}
+                      </TableBody>
+                  </Table>
+              </CardContent>
+          </Card>
         </div>
       </div>
     </main>

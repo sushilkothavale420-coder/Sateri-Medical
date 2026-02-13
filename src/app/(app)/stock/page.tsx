@@ -56,8 +56,8 @@ export default function StockManagementPage() {
       medicineId: '',
       medicineName: '',
       batchNumber: '',
-      quantity: undefined,
-      purchasePricePerSmallestUnit: undefined,
+      quantity: '' as any,
+      purchasePricePerSmallestUnit: '' as any,
     },
   });
 
