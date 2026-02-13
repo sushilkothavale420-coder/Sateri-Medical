@@ -14,7 +14,7 @@ import {
 import Autoplay from 'embla-carousel-autoplay';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import React from 'react';
+import React, { useEffect } from 'react';
 
 export default function HomePage() {
   const { user, isUserLoading } = useUser();
@@ -24,17 +24,18 @@ export default function HomePage() {
     Autoplay({ delay: 3000, stopOnInteraction: true })
   );
 
-  if (isUserLoading) {
+  useEffect(() => {
+    if (!isUserLoading && user) {
+      router.push('/dashboard');
+    }
+  }, [user, isUserLoading, router]);
+
+  if (isUserLoading || user) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div>Loading...</div>
       </div>
     );
-  }
-
-  if (user) {
-    router.push('/dashboard');
-    return null;
   }
   
   return (

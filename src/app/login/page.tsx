@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -23,23 +23,24 @@ export default function LoginPage() {
   const router = useRouter();
   const { user, isUserLoading } = useUser();
 
+  useEffect(() => {
+    if (!isUserLoading && user) {
+      router.push('/dashboard');
+    }
+  }, [user, isUserLoading, router]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!auth) return;
     initiateEmailSignIn(auth, loginEmail, loginPassword);
   };
 
-  if (isUserLoading) {
+  if (isUserLoading || user) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div>Loading...</div>
       </div>
     );
-  }
-
-  if (user) {
-    router.push('/dashboard');
-    return null;
   }
 
   return (
