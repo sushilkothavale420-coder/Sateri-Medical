@@ -22,7 +22,6 @@ import {
   LifeBuoy,
   LogOut,
   Handshake,
-  Bot,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 
@@ -43,7 +42,6 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader>
         <div className="flex items-center gap-2">
-          <Bot className="size-8 text-primary" />
           <h1 className="text-xl font-headline font-semibold text-sidebar-foreground">
             PharmaFlow
           </h1>
