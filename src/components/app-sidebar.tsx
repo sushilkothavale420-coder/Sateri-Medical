@@ -15,7 +15,6 @@ import {
   Boxes,
   ShoppingBag,
   Users,
-  Truck,
   BarChart2,
   Settings,
   LogOut,
@@ -26,12 +25,12 @@ import { useAuth } from '@/firebase';
 import Link from 'next/link';
 
 const navItems = [
-  { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', adminOnly: false },
-  { href: '/medicines', icon: Boxes, label: 'Medicines', adminOnly: false },
-  { href: '/sales', icon: ShoppingBag, label: 'Sales (POS)', adminOnly: false },
-  { href: '/customers', icon: Users, label: 'Customers', adminOnly: false },
-  { href: '/retailers', icon: Handshake, label: 'Retailers', adminOnly: true },
-  { href: '/reports', icon: BarChart2, label: 'Reports', adminOnly: true },
+  { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { href: '/medicines', icon: Boxes, label: 'Medicines' },
+  { href: '/sales', icon: ShoppingBag, label: 'Sales (POS)' },
+  { href: '/customers', icon: Users, label: 'Customers' },
+  { href: '/retailers', icon: Handshake, label: 'Retailers' },
+  { href: '/reports', icon: BarChart2, label: 'Reports' },
 ];
 
 export function AppSidebar() {
