@@ -22,6 +22,7 @@ export type WithId<T> = T & { id: string };
 export interface UseCollectionResult<T> {
   data: WithId<T>[] | null; // Document data with ID, or null.
   error: FirestoreError | Error | null; // Error object, or null.
+  isLoading: boolean;
 }
 
 /* Internal implementation of Query:
@@ -58,14 +59,17 @@ export function useCollection<T = any>(
 
   const [data, setData] = useState<StateDataType>(null);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
     if (!memoizedTargetRefOrQuery) {
       setData(null);
       setError(null);
+      setIsLoading(false);
       return;
     }
 
+    setIsLoading(true);
     setError(null);
 
     // Directly use memoizedTargetRefOrQuery as it's assumed to be the final query
@@ -78,6 +82,7 @@ export function useCollection<T = any>(
         }
         setData(results);
         setError(null);
+        setIsLoading(false);
       },
       (error: FirestoreError) => {
         // This logic extracts the path from either a ref or a query
@@ -93,6 +98,7 @@ export function useCollection<T = any>(
 
         setError(contextualError)
         setData(null)
+        setIsLoading(false);
 
         // trigger global error propagation
         errorEmitter.emit('permission-error', contextualError);
@@ -104,5 +110,5 @@ export function useCollection<T = any>(
   if(memoizedTargetRefOrQuery && !memoizedTargetRefOrQuery.__memo) {
     throw new Error(memoizedTargetRefOrQuery + ' was not properly memoized using useMemoFirebase');
   }
-  return { data, error };
+  return { data, error, isLoading };
 }

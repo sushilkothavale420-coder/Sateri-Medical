@@ -21,6 +21,7 @@ type WithId<T> = T & { id: string };
 export interface UseDocResult<T> {
   data: WithId<T> | null; // Document data with ID, or null.
   error: FirestoreError | Error | null; // Error object, or null.
+  isLoading: boolean;
 }
 
 /**
@@ -44,14 +45,17 @@ export function useDoc<T = any>(
 
   const [data, setData] = useState<StateDataType>(null);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
     if (!memoizedDocRef) {
       setData(null);
       setError(null);
+      setIsLoading(false);
       return;
     }
 
+    setIsLoading(true);
     setError(null);
 
     const unsubscribe = onSnapshot(
@@ -64,6 +68,7 @@ export function useDoc<T = any>(
           setData(null);
         }
         setError(null); // Clear any previous error on successful snapshot (even if doc doesn't exist)
+        setIsLoading(false);
       },
       (error: FirestoreError) => {
         const contextualError = new FirestorePermissionError({
@@ -73,6 +78,7 @@ export function useDoc<T = any>(
 
         setError(contextualError)
         setData(null)
+        setIsLoading(false);
 
         // trigger global error propagation
         errorEmitter.emit('permission-error', contextualError);
@@ -82,5 +88,5 @@ export function useDoc<T = any>(
     return () => unsubscribe();
   }, [memoizedDocRef]); // Re-run if the memoizedDocRef changes.
 
-  return { data, error };
+  return { data, error, isLoading };
 }
