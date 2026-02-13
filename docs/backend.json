@@ -1,0 +1,1145 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the system with role-based access control (Admin or Retailer).",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the User entity."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the user, used for login and communication.",
+          "format": "email"
+        },
+        "role": {
+          "type": "string",
+          "description": "The role of the user (e.g., 'Admin', 'Retailer'), determining access permissions."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the user account was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the user account was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "role",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "MedicineComposition": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "MedicineComposition",
+      "type": "object",
+      "description": "Represents the generic chemical composition of medicines, allowing for generic search and alternative suggestions.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the MedicineComposition entity (e.g., a composition ID)."
+        },
+        "name": {
+          "type": "string",
+          "description": "The common name of the chemical composition (e.g., 'Paracetamol', 'Ibuprofen')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description or common uses of the composition."
+        },
+        "aiMatchApproved": {
+          "type": "boolean",
+          "description": "Indicates if an AI-suggested composition match has been reviewed and approved by an Admin."
+        },
+        "aiMatchSuggestion": {
+          "type": "string",
+          "description": "The AI tool's suggested composition name, if different from the entered one, awaiting Admin review."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "aiMatchApproved"
+      ]
+    },
+    "Medicine": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Medicine",
+      "type": "object",
+      "description": "Details of a specific medicine product, including pricing, units of measure, and reorder points. This acts as the inventory item.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Medicine entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "Commercial brand name of the medicine (e.g., 'Crocin Advance', 'Saridon')."
+        },
+        "compositionId": {
+          "type": "string",
+          "description": "Reference to MedicineComposition. (Relationship: MedicineComposition 1:N Medicine)"
+        },
+        "category": {
+          "type": "string",
+          "description": "Category of the medicine (e.g., 'Painkiller', 'Antibiotic', 'Antacid')."
+        },
+        "company": {
+          "type": "string",
+          "description": "The pharmaceutical company or manufacturer of the medicine."
+        },
+        "storeBox": {
+          "type": "string",
+          "description": "Physical location or storage box identifier within the store (e.g., 'Shelf A-1', 'Drawer 3')."
+        },
+        "baseSellingPrice": {
+          "type": "number",
+          "description": "The standard selling price per smallest unit of the medicine."
+        },
+        "smallestUnitName": {
+          "type": "string",
+          "description": "The name of the smallest measurable unit for this medicine (e.g., 'tablet', 'ml', 'capsule')."
+        },
+        "bulkUnitName": {
+          "type": "string",
+          "description": "The name of the bulk unit for purchasing or larger packaging (e.g., 'strip', 'box', 'bottle')."
+        },
+        "unitsPerBulk": {
+          "type": "number",
+          "description": "The number of smallest units contained within one bulk unit (e.g., 10 tablets per strip)."
+        },
+        "reorderPoint": {
+          "type": "number",
+          "description": "The minimum stock threshold (in smallest units) at which a reorder alert is triggered."
+        },
+        "taxRateGst": {
+          "type": "number",
+          "description": "The GST (Goods and Services Tax) rate applicable to this medicine, as a percentage."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "Optional URL to an image of the medicine product.",
+          "format": "uri"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the medicine record was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the medicine record was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "compositionId",
+        "category",
+        "company",
+        "baseSellingPrice",
+        "smallestUnitName",
+        "unitsPerBulk",
+        "reorderPoint",
+        "taxRateGst",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Batch": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Batch",
+      "type": "object",
+      "description": "Manages individual batches of medicines, tracking expiry dates, quantities, and purchase details for FEFO management.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Batch entity."
+        },
+        "medicineId": {
+          "type": "string",
+          "description": "Reference to Medicine. (Relationship: Medicine 1:N Batch)"
+        },
+        "batchNumber": {
+          "type": "string",
+          "description": "The manufacturer-assigned batch number for this specific production lot of medicine."
+        },
+        "expiryDate": {
+          "type": "string",
+          "description": "The expiry date of the medicine batch, crucial for FEFO and expiry alerts.",
+          "format": "date"
+        },
+        "quantityInSmallestUnits": {
+          "type": "number",
+          "description": "The current quantity of medicine in this batch, expressed in the smallest measurable units."
+        },
+        "purchasePricePerSmallestUnit": {
+          "type": "number",
+          "description": "The cost price for each smallest unit of medicine in this specific batch when purchased."
+        },
+        "supplierId": {
+          "type": "string",
+          "description": "Reference to Supplier, who supplied this batch. (Relationship: Supplier 1:N Batch)"
+        },
+        "receivedAt": {
+          "type": "string",
+          "description": "Timestamp when this medicine batch was received into inventory.",
+          "format": "date-time"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the batch record was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the batch record was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "medicineId",
+        "batchNumber",
+        "expiryDate",
+        "quantityInSmallestUnits",
+        "purchasePricePerSmallestUnit",
+        "supplierId",
+        "receivedAt",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Supplier": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Supplier",
+      "type": "object",
+      "description": "Manages information about medicine suppliers/vendors for procurement and returns.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Supplier entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the supplier or vendor company."
+        },
+        "contactPerson": {
+          "type": "string",
+          "description": "The name of the primary contact person at the supplier."
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "The contact phone number for the supplier."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address for the supplier.",
+          "format": "email"
+        },
+        "address": {
+          "type": "string",
+          "description": "The physical address of the supplier."
+        },
+        "accountPayableBalance": {
+          "type": "number",
+          "description": "The current outstanding amount owed to this supplier."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the supplier record was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the supplier record was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "accountPayableBalance",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "PurchaseOrder": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PurchaseOrder",
+      "type": "object",
+      "description": "Represents an order placed with a supplier for replenishing medicine stock, often triggered by ROP alerts.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the PurchaseOrder entity."
+        },
+        "supplierId": {
+          "type": "string",
+          "description": "Reference to Supplier. (Relationship: Supplier 1:N PurchaseOrder)"
+        },
+        "orderDate": {
+          "type": "string",
+          "description": "The date and time the purchase order was created or placed.",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the purchase order (e.g., 'Pending', 'Ordered', 'Received', 'Cancelled')."
+        },
+        "totalAmount": {
+          "type": "number",
+          "description": "The calculated total monetary amount of the purchase order."
+        },
+        "createdByUserId": {
+          "type": "string",
+          "description": "Reference to User who created this purchase order. (Relationship: User 1:N PurchaseOrder)"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the purchase order record was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the purchase order record was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "supplierId",
+        "orderDate",
+        "status",
+        "totalAmount",
+        "createdByUserId",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "PurchaseOrderItem": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PurchaseOrderItem",
+      "type": "object",
+      "description": "Details of a single medicine item included in a purchase order.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the PurchaseOrderItem entity."
+        },
+        "purchaseOrderId": {
+          "type": "string",
+          "description": "Reference to PurchaseOrder. (Relationship: PurchaseOrder 1:N PurchaseOrderItem)"
+        },
+        "medicineId": {
+          "type": "string",
+          "description": "Reference to Medicine. (Relationship: Medicine 1:N PurchaseOrderItem)"
+        },
+        "requestedQuantity": {
+          "type": "number",
+          "description": "The quantity of medicine requested in this item, in its smallest units."
+        },
+        "unitPriceAtOrder": {
+          "type": "number",
+          "description": "The agreed unit price (per smallest unit) for this medicine at the time of placing the order."
+        },
+        "totalPrice": {
+          "type": "number",
+          "description": "The total price for this specific line item (quantity * unitPriceAtOrder)."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the purchase order item record was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the purchase order item record was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "purchaseOrderId",
+        "medicineId",
+        "requestedQuantity",
+        "unitPriceAtOrder",
+        "totalPrice",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Customer": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Customer",
+      "type": "object",
+      "description": "Represents a customer account managed by the admin, including their details and financial standing.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Customer entity, typically an admin-created ID."
+        },
+        "name": {
+          "type": "string",
+          "description": "The full name of the customer."
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "The contact phone number of the customer."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the customer.",
+          "format": "email"
+        },
+        "address": {
+          "type": "string",
+          "description": "The physical address of the customer."
+        },
+        "debtAmount": {
+          "type": "number",
+          "description": "The current outstanding debt amount owed by the customer."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the customer record was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the customer record was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "debtAmount",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "CustomerAccountTransaction": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CustomerAccountTransaction",
+      "type": "object",
+      "description": "Records financial transactions related to a customer's account, such as payments or debt adjustments.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the CustomerAccountTransaction entity."
+        },
+        "customerId": {
+          "type": "string",
+          "description": "Reference to Customer. (Relationship: Customer 1:N CustomerAccountTransaction)"
+        },
+        "transactionDate": {
+          "type": "string",
+          "description": "The date and time when the transaction occurred.",
+          "format": "date-time"
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of financial transaction (e.g., 'Payment', 'DebtAdjustment', 'SaleCharge')."
+        },
+        "amount": {
+          "type": "number",
+          "description": "The monetary amount of the transaction."
+        },
+        "paymentMethod": {
+          "type": "string",
+          "description": "The method of payment if applicable (e.g., 'Cash', 'UPI', 'Credit Card', 'Debt')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief description or note about the transaction."
+        },
+        "relatedSaleId": {
+          "type": "string",
+          "description": "Optional reference to a Sale, if this transaction is directly related to a specific sale. (Relationship: Sale 1:N CustomerAccountTransaction)"
+        },
+        "createdByUserId": {
+          "type": "string",
+          "description": "Reference to User who recorded this customer account transaction. (Relationship: User 1:N CustomerAccountTransaction)"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the customer account transaction record was created.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "customerId",
+        "transactionDate",
+        "type",
+        "amount",
+        "createdByUserId",
+        "createdAt"
+      ]
+    },
+    "Sale": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Sale",
+      "type": "object",
+      "description": "Records details of a customer purchase or bill, ensuring transactional integrity with stock levels.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Sale entity."
+        },
+        "saleDate": {
+          "type": "string",
+          "description": "The date and time when the sale occurred.",
+          "format": "date-time"
+        },
+        "customerId": {
+          "type": "string",
+          "description": "Optional reference to Customer if the sale is linked to a customer account. (Relationship: Customer 1:N Sale)"
+        },
+        "totalAmountBeforeTax": {
+          "type": "number",
+          "description": "The total monetary amount of the sale before any taxes are applied."
+        },
+        "totalTaxAmount": {
+          "type": "number",
+          "description": "The total tax amount (e.g., GST) applied to the entire sale."
+        },
+        "totalAmountDue": {
+          "type": "number",
+          "description": "The final total monetary amount due for the sale, including all taxes."
+        },
+        "amountPaid": {
+          "type": "number",
+          "description": "The amount paid by the customer for this sale."
+        },
+        "balanceDue": {
+          "type": "number",
+          "description": "The remaining balance due for the sale (totalAmountDue - amountPaid)."
+        },
+        "paymentMethod": {
+          "type": "string",
+          "description": "The payment method used for the sale (e.g., 'Cash', 'UPI', 'Card', 'Debt')."
+        },
+        "invoiceNumber": {
+          "type": "string",
+          "description": "A unique invoice number generated for this sale."
+        },
+        "createdByUserId": {
+          "type": "string",
+          "description": "Reference to User (Retailer) who processed this sale. (Relationship: User 1:N Sale)"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the sale record was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the sale record was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "saleDate",
+        "totalAmountDue",
+        "amountPaid",
+        "balanceDue",
+        "paymentMethod",
+        "invoiceNumber",
+        "createdByUserId",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "SaleItem": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SaleItem",
+      "type": "object",
+      "description": "Details of a single medicine item included in a sale transaction, linking to the specific batch sold.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the SaleItem entity."
+        },
+        "saleId": {
+          "type": "string",
+          "description": "Reference to Sale. (Relationship: Sale 1:N SaleItem)"
+        },
+        "medicineId": {
+          "type": "string",
+          "description": "Reference to Medicine. (Relationship: Medicine 1:N SaleItem)"
+        },
+        "batchId": {
+          "type": "string",
+          "description": "Reference to Batch, indicating which specific batch of the medicine was sold. (Relationship: Batch 1:N SaleItem)"
+        },
+        "quantitySold": {
+          "type": "number",
+          "description": "The quantity of medicine sold in this item, in its smallest units."
+        },
+        "unitSellingPrice": {
+          "type": "number",
+          "description": "The selling price per smallest unit of medicine at the time of sale."
+        },
+        "gstRateApplied": {
+          "type": "number",
+          "description": "The GST rate applied to this item at the time of sale, as a percentage."
+        },
+        "itemTotalBeforeTax": {
+          "type": "number",
+          "description": "The total price for this item before tax (quantitySold * unitSellingPrice)."
+        },
+        "itemTaxAmount": {
+          "type": "number",
+          "description": "The total tax amount for this specific item."
+        },
+        "itemTotalWithTax": {
+          "type": "number",
+          "description": "The final total price for this item including tax."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the sale item record was created.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "saleId",
+        "medicineId",
+        "batchId",
+        "quantitySold",
+        "unitSellingPrice",
+        "gstRateApplied",
+        "itemTotalBeforeTax",
+        "itemTaxAmount",
+        "itemTotalWithTax",
+        "createdAt"
+      ]
+    },
+    "ReturnToVendor": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ReturnToVendor",
+      "type": "object",
+      "description": "Records details of medicine batches returned to a supplier due to expiry, damage, or other reasons.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ReturnToVendor entity."
+        },
+        "supplierId": {
+          "type": "string",
+          "description": "Reference to Supplier to whom the items are being returned. (Relationship: Supplier 1:N ReturnToVendor)"
+        },
+        "returnDate": {
+          "type": "string",
+          "description": "The date and time when the return to vendor was initiated or processed.",
+          "format": "date-time"
+        },
+        "reason": {
+          "type": "string",
+          "description": "The reason for returning the items (e.g., 'Expired', 'Damaged', 'Overstock')."
+        },
+        "totalCreditExpected": {
+          "type": "number",
+          "description": "The total monetary value of the items being returned, expected as a credit from the supplier."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the return process (e.g., 'Pending', 'Completed', 'Cancelled')."
+        },
+        "createdByUserId": {
+          "type": "string",
+          "description": "Reference to User who initiated the return to vendor. (Relationship: User 1:N ReturnToVendor)"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the return to vendor record was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the return to vendor record was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "supplierId",
+        "returnDate",
+        "reason",
+        "totalCreditExpected",
+        "status",
+        "createdByUserId",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ReturnToVendorItem": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ReturnToVendorItem",
+      "type": "object",
+      "description": "Details of a single medicine item included in a return to vendor transaction.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ReturnToVendorItem entity."
+        },
+        "returnToVendorId": {
+          "type": "string",
+          "description": "Reference to ReturnToVendor. (Relationship: ReturnToVendor 1:N ReturnToVendorItem)"
+        },
+        "medicineId": {
+          "type": "string",
+          "description": "Reference to Medicine. (Relationship: Medicine 1:N ReturnToVendorItem)"
+        },
+        "batchId": {
+          "type": "string",
+          "description": "Reference to Batch, indicating which specific batch of the medicine was returned. (Relationship: Batch 1:N ReturnToVendorItem)"
+        },
+        "quantityReturned": {
+          "type": "number",
+          "description": "The quantity of medicine items returned, in its smallest units."
+        },
+        "unitCreditValue": {
+          "type": "number",
+          "description": "The monetary value per smallest unit expected as credit from the supplier for this returned item."
+        },
+        "itemTotalCreditValue": {
+          "type": "number",
+          "description": "The total monetary value for this specific line item being returned (quantityReturned * unitCreditValue)."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the return to vendor item record was created.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "returnToVendorId",
+        "medicineId",
+        "batchId",
+        "quantityReturned",
+        "unitCreditValue",
+        "itemTotalCreditValue",
+        "createdAt"
+      ]
+    },
+    "StockAdjustmentLog": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "StockAdjustmentLog",
+      "type": "object",
+      "description": "An immutable log of all manual adjustments made to medicine stock for auditing and compliance.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the StockAdjustmentLog entity."
+        },
+        "medicineId": {
+          "type": "string",
+          "description": "Reference to Medicine whose stock was adjusted. (Relationship: Medicine 1:N StockAdjustmentLog)"
+        },
+        "batchId": {
+          "type": "string",
+          "description": "Optional reference to Batch, if a specific batch's stock was adjusted. (Relationship: Batch 1:N StockAdjustmentLog)"
+        },
+        "adjustmentDate": {
+          "type": "string",
+          "description": "The date and time when the stock adjustment occurred.",
+          "format": "date-time"
+        },
+        "adjustmentType": {
+          "type": "string",
+          "description": "The type of adjustment (e.g., 'Manual Increase', 'Manual Decrease', 'Stocktake', 'ReturnToVendor', 'Sale')."
+        },
+        "oldQuantity": {
+          "type": "number",
+          "description": "The quantity of the medicine (in smallest units) before the adjustment."
+        },
+        "newQuantity": {
+          "type": "number",
+          "description": "The quantity of the medicine (in smallest units) after the adjustment."
+        },
+        "adjustedByUserId": {
+          "type": "string",
+          "description": "Reference to User who performed the stock adjustment. (Relationship: User 1:N StockAdjustmentLog)"
+        },
+        "reason": {
+          "type": "string",
+          "description": "A detailed reason for the stock adjustment (e.g., 'Damaged Packaging', 'Inventory Count Discrepancy')."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the audit log record was created.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "medicineId",
+        "adjustmentDate",
+        "adjustmentType",
+        "oldQuantity",
+        "newQuantity",
+        "adjustedByUserId",
+        "reason",
+        "createdAt"
+      ]
+    },
+    "Request": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Request",
+      "type": "object",
+      "description": "Facilitates communication and requests between Admin and Retailers regarding items or supplies.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Request entity."
+        },
+        "requesterUserId": {
+          "type": "string",
+          "description": "Reference to User who initiated this request. (Relationship: User 1:N Request)"
+        },
+        "responderUserId": {
+          "type": "string",
+          "description": "Reference to User who is the intended recipient/responder of this request. (Relationship: User 1:N Request)"
+        },
+        "requestType": {
+          "type": "string",
+          "description": "The type of request (e.g., 'Demand Item', 'Supply Item', 'General Query')."
+        },
+        "medicineId": {
+          "type": "string",
+          "description": "Optional reference to Medicine if the request pertains to a specific item. (Relationship: Medicine 1:N Request)"
+        },
+        "requestedQuantity": {
+          "type": "number",
+          "description": "The quantity of medicine requested, if applicable, in its smallest units."
+        },
+        "message": {
+          "type": "string",
+          "description": "A detailed message describing the request."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the request (e.g., 'Pending', 'Approved', 'Rejected', 'Completed')."
+        },
+        "requestDate": {
+          "type": "string",
+          "description": "The date and time when the request was initiated.",
+          "format": "date-time"
+        },
+        "responseDate": {
+          "type": "string",
+          "description": "Optional date and time when the request was responded to.",
+          "format": "date-time"
+        },
+        "responseMessage": {
+          "type": "string",
+          "description": "Optional message provided by the responder to the request."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the request record was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the request record was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "requesterUserId",
+        "responderUserId",
+        "requestType",
+        "message",
+        "status",
+        "requestDate",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "User profiles with role (Admin/Retailer). Used for authenticating users and determining their permissions via the 'role' field.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/medicine_compositions/{compositionId}",
+        "definition": {
+          "entityName": "MedicineComposition",
+          "schema": {
+            "$ref": "#/backend/entities/MedicineComposition"
+          },
+          "description": "Generic chemical compositions of medicines, used for generic search. Only Admin can manage.",
+          "params": [
+            {
+              "name": "compositionId",
+              "description": "The unique ID of the medicine composition."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/medicines/{medicineId}",
+        "definition": {
+          "entityName": "Medicine",
+          "schema": {
+            "$ref": "#/backend/entities/Medicine"
+          },
+          "description": "Details of specific medicine products. Includes denormalized 'compositionId' for generic search. Only Admin can manage and Retailers can read.",
+          "params": [
+            {
+              "name": "medicineId",
+              "description": "The unique ID of the medicine."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/batches/{batchId}",
+        "definition": {
+          "entityName": "Batch",
+          "schema": {
+            "$ref": "#/backend/entities/Batch"
+          },
+          "description": "Individual medicine batches, tracking expiry dates and quantities. Includes denormalized 'medicineId' for efficient lookup. Only Admin can manage and Retailers can read.",
+          "params": [
+            {
+              "name": "batchId",
+              "description": "The unique ID of the medicine batch."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/suppliers/{supplierId}",
+        "definition": {
+          "entityName": "Supplier",
+          "schema": {
+            "$ref": "#/backend/entities/Supplier"
+          },
+          "description": "Information about medicine suppliers/vendors. Only Admin can manage and Retailers can read.",
+          "params": [
+            {
+              "name": "supplierId",
+              "description": "The unique ID of the supplier."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/purchase_orders/{purchaseOrderId}",
+        "definition": {
+          "entityName": "PurchaseOrder",
+          "schema": {
+            "$ref": "#/backend/entities/PurchaseOrder"
+          },
+          "description": "Orders placed with suppliers for stock replenishment. Includes 'createdByUserId' (Admin UID) for authorization. Only Admin can manage.",
+          "params": [
+            {
+              "name": "purchaseOrderId",
+              "description": "The unique ID of the purchase order."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/purchase_orders/{purchaseOrderId}/items/{purchaseOrderItemId}",
+        "definition": {
+          "entityName": "PurchaseOrderItem",
+          "schema": {
+            "$ref": "#/backend/entities/PurchaseOrderItem"
+          },
+          "description": "Details of specific medicine items within a purchase order. Includes denormalized 'purchaseOrderId' and 'purchaseOrderCreatedByUserId' (Admin UID) for authorization independence.",
+          "params": [
+            {
+              "name": "purchaseOrderId",
+              "description": "The unique ID of the parent purchase order."
+            },
+            {
+              "name": "purchaseOrderItemId",
+              "description": "The unique ID of the purchase order item."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/customers/{customerId}",
+        "definition": {
+          "entityName": "Customer",
+          "schema": {
+            "$ref": "#/backend/entities/Customer"
+          },
+          "description": "Customer accounts. Admin creates/manages these. Retailers can read and create transactions for them.",
+          "params": [
+            {
+              "name": "customerId",
+              "description": "The unique ID of the customer."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/customers/{customerId}/transactions/{transactionId}",
+        "definition": {
+          "entityName": "CustomerAccountTransaction",
+          "schema": {
+            "$ref": "#/backend/entities/CustomerAccountTransaction"
+          },
+          "description": "Financial transactions related to a customer's account. Includes 'customerId' and 'createdByUserId' (Retailer/Admin UID) for authorization. Allows both Admin and Retailers to create transactions for existing customers.",
+          "params": [
+            {
+              "name": "customerId",
+              "description": "The unique ID of the parent customer."
+            },
+            {
+              "name": "transactionId",
+              "description": "The unique ID of the customer account transaction."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/sales/{saleId}",
+        "definition": {
+          "entityName": "Sale",
+          "schema": {
+            "$ref": "#/backend/entities/Sale"
+          },
+          "description": "Records of customer purchases. Includes 'createdByUserId' (Retailer UID) for authorization. Retailers can manage their own sales, Admin can read all sales.",
+          "params": [
+            {
+              "name": "saleId",
+              "description": "The unique ID of the sale."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/sales/{saleId}/items/{saleItemId}",
+        "definition": {
+          "entityName": "SaleItem",
+          "schema": {
+            "$ref": "#/backend/entities/SaleItem"
+          },
+          "description": "Details of individual medicine items within a sale transaction. Includes denormalized 'saleId' and 'saleCreatedByUserId' (Retailer UID) for authorization independence.",
+          "params": [
+            {
+              "name": "saleId",
+              "description": "The unique ID of the parent sale."
+            },
+            {
+              "name": "saleItemId",
+              "description": "The unique ID of the sale item."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/returns_to_vendor/{returnToVendorId}",
+        "definition": {
+          "entityName": "ReturnToVendor",
+          "schema": {
+            "$ref": "#/backend/entities/ReturnToVendor"
+          },
+          "description": "Records of medicine batches returned to suppliers. Includes 'createdByUserId' (Admin UID) for authorization. Only Admin can manage.",
+          "params": [
+            {
+              "name": "returnToVendorId",
+              "description": "The unique ID of the return to vendor record."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/returns_to_vendor/{returnToVendorId}/items/{returnToVendorItemId}",
+        "definition": {
+          "entityName": "ReturnToVendorItem",
+          "schema": {
+            "$ref": "#/backend/entities/ReturnToVendorItem"
+          },
+          "description": "Details of individual medicine items within a return to vendor transaction. Includes denormalized 'returnToVendorId' and 'returnCreatedByUserId' (Admin UID) for authorization independence.",
+          "params": [
+            {
+              "name": "returnToVendorId",
+              "description": "The unique ID of the parent return to vendor record."
+            },
+            {
+              "name": "returnToVendorItemId",
+              "description": "The unique ID of the return to vendor item."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/stock_adjustment_logs/{logId}",
+        "definition": {
+          "entityName": "StockAdjustmentLog",
+          "schema": {
+            "$ref": "#/backend/entities/StockAdjustmentLog"
+          },
+          "description": "Immutable audit log of all manual stock adjustments. Includes 'adjustedByUserId' (Admin/Retailer UID) for accountability. Read-only for Admin, write-only for the user performing the adjustment.",
+          "params": [
+            {
+              "name": "logId",
+              "description": "The unique ID of the stock adjustment log entry."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/requests/{requestId}",
+        "definition": {
+          "entityName": "Request",
+          "schema": {
+            "$ref": "#/backend/entities/Request"
+          },
+          "description": "Requests between Admin and Retailers. Includes 'requesterUserId' and 'responderUserId' for explicit access control and collaboration.",
+          "params": [
+            {
+              "name": "requestId",
+              "description": "The unique ID of the request."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The proposed Firestore structure for 'Sateri Medical' prioritizes security, scalability, and debuggability by adhering to the core design principles, especially Authorization Independence and Structural Segregation. The design leverages top-level collections for universally accessible or globally managed entities and subcollections for tightly coupled transactional or itemized data. Authorization relies on a Role-Based Access Control (RBAC) model, where user roles ('Admin', 'Retailer') are stored in their respective `/users/{userId}` documents. Security rules will fetch this role to determine read/write permissions across collections.\n\nAuthorization Independence is achieved primarily through denormalization. For subcollections that conceptually depend on a parent document's authorization context (e.g., `PurchaseOrderItem` needing the `PurchaseOrder`'s creator's permissions), the necessary authorization fields (like `createdByUserId` from the parent) are explicitly copied into each subcollection document (e.g., `purchaseOrderCreatedByUserId` in `PurchaseOrderItem`). This eliminates the need for `get()` calls in Firestore Security Rules to retrieve parent documents for authorization checks. This approach ensures that atomic operations (transactions/batches) involving parent and child documents remain secure and do not encounter `get()`-related rule evaluation issues.\n\nQueryability and Authorization (QAPs - Rules are not Filters) are supported by segregating data based on its security posture:\n\n1.  **Globally Accessible (with Role-Based Write):** Collections like `/medicine_compositions`, `/medicines`, `/batches`, and `/suppliers` are designed to be globally readable by all authenticated 'Admin' and 'Retailer' users. Write access to these collections is restricted to 'Admin' users only. This homogeneous security posture allows for efficient `list` queries (e.g., listing all medicines) without requiring complex `where` clauses for authorization, as the rules already ensure only authorized users can perform these operations.\n\n2.  **User-Owned/Context-Specific Data:** Collections such as `/sales`, `/purchase_orders`, `/returns_to_vendor`, `/stock_adjustment_logs`, and `/requests` contain a `createdByUserId` or similar field explicitly linking them to the creating user (Admin or Retailer). For example, a 'Retailer' can `list` their own sales from `/sales` because the rules will enforce `request.auth.uid == resource.data.createdByUserId` for write operations and allow reads for specific users or admins globally. This design ensures that a user can only access documents they are authorized for directly through a field in the document, without filtering the query results in the rules.\n\n3.  **Customer Management:** `/customers` is a top-level collection managed by 'Admin', with 'Retailers' having read access to facilitate sales. `CustomerAccountTransaction`s are subcollections under a specific customer, containing `createdByUserId` to track which Retailer/Admin processed the transaction.\n\nThis structure makes authorization intent explicit, reduces complexity in security rules, and supports efficient data retrieval while upholding strong security requirements."
+  }
+}
