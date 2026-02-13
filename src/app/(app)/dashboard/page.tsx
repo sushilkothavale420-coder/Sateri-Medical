@@ -27,7 +27,7 @@ import { SalesChart } from "./components/sales-chart";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collectionGroup, query, orderBy, limit, collection } from "firebase/firestore";
 import { Sale, SaleItem, Customer } from "@/lib/types";
-import { use, useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export default function DashboardPage() {
   const firestore = useFirestore();
