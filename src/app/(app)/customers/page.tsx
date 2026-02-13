@@ -8,15 +8,18 @@ import { Customer } from '@/lib/types';
 import { CustomersDataTable } from './components/customers-data-table';
 import { Columns } from './components/columns';
 import { AddCustomerDialog } from './components/add-customer-dialog';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { DeleteCustomerDialog } from './components/delete-customer-dialog';
 import { EditCustomerDialog } from './components/edit-customer-dialog';
 import { useAdmin } from '@/hooks/use-admin';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 export default function CustomersPage() {
   const firestore = useFirestore();
   const { isAdmin } = useAdmin();
   const [isAddDialogOpen, setAddDialogOpen] = useState(false);
+  const [showOnlyWithBalance, setShowOnlyWithBalance] = useState(false);
   
   const customersQuery = useMemoFirebase(
     () => (firestore ? collection(firestore, 'customers') : null),
@@ -32,6 +35,14 @@ export default function CustomersPage() {
     setDeleteOpen, 
     selectedCustomer
   } = Columns();
+
+  const filteredCustomers = useMemo(() => {
+    if (!customers) return [];
+    if (showOnlyWithBalance) {
+        return customers.filter(c => c.debtAmount > 0);
+    }
+    return customers;
+  }, [customers, showOnlyWithBalance]);
 
   return (
     <div className="flex min-h-screen w-full flex-col">
@@ -52,7 +63,18 @@ export default function CustomersPage() {
           )}
         </div>
         
-        <CustomersDataTable columns={columns} data={customers || []} />
+        <div className="flex items-center gap-4">
+            <div className="flex items-center space-x-2">
+                <Switch 
+                    id="balance-filter" 
+                    checked={showOnlyWithBalance}
+                    onCheckedChange={setShowOnlyWithBalance}
+                />
+                <Label htmlFor="balance-filter">Show only customers with balance due</Label>
+            </div>
+        </div>
+
+        <CustomersDataTable columns={columns} data={filteredCustomers || []} />
 
         {selectedCustomer && (
           <>

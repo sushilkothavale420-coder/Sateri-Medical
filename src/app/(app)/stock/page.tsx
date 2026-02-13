@@ -4,8 +4,8 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { Medicine, stockEntrySchema } from '@/lib/types';
-import { collection } from 'firebase/firestore';
+import { Medicine, stockEntrySchema, Batch } from '@/lib/types';
+import { collection, query, orderBy } from 'firebase/firestore';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,6 +20,11 @@ import { useToast } from '@/hooks/use-toast';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandList } from '@/components/ui/command';
 import { z } from 'zod';
 import { useAdmin } from '@/hooks/use-admin';
+import { Separator } from '@/components/ui/separator';
+import { Columns } from './components/columns';
+import { BatchesDataTable } from './components/batches-data-table';
+import { DeleteBatchDialog } from './components/delete-batch-dialog';
+
 
 type StockEntryFormValues = z.infer<typeof stockEntrySchema>;
 
@@ -30,6 +35,13 @@ export default function StockManagementPage() {
   const { toast } = useToast();
   const [open, setOpen] = useState(false)
   const [selectedMedicine, setSelectedMedicine] = useState<Medicine | null>(null);
+
+  const batchesQuery = useMemoFirebase(
+    () => (firestore ? query(collection(firestore, 'batches'), orderBy('receivedAt', 'desc')) : null),
+    [firestore]
+  );
+  const { data: batches } = useCollection<Batch>(batchesQuery);
+  const { columns, isDeleteOpen, setDeleteOpen, selectedBatch } = Columns();
 
   const medicinesQuery = useMemoFirebase(
     () => (firestore ? collection(firestore, 'medicines') : null),
@@ -110,7 +122,7 @@ export default function StockManagementPage() {
 
   return (
     <div className="flex min-h-screen w-full flex-col">
-      <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+      <main className="flex flex-1 flex-col gap-8 p-4 md:gap-8 md:p-8">
         <h1 className="text-lg font-semibold md:text-2xl">Stock Management</h1>
         <Card>
             <CardHeader>
@@ -274,6 +286,26 @@ export default function StockManagementPage() {
                 </Form>
             </CardContent>
         </Card>
+
+        <Separator />
+
+        <Card>
+            <CardHeader>
+                <CardTitle>Current Stock Batches</CardTitle>
+                <CardDescription>View and manage all current batches in your inventory.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <BatchesDataTable columns={columns} data={batches || []} />
+            </CardContent>
+        </Card>
+        
+        {selectedBatch && (
+            <DeleteBatchDialog
+                isOpen={isDeleteOpen}
+                onOpenChange={setDeleteOpen}
+                batch={selectedBatch}
+            />
+        )}
       </main>
     </div>
   );

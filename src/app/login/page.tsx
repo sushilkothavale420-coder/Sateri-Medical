@@ -41,8 +41,7 @@ export default function LoginPage() {
     if (!auth) return;
     try {
       await initiateEmailSignIn(auth, loginEmail, loginPassword);
-      // Explicitly redirect on successful login.
-      router.push('/dashboard');
+      // Let the useEffect handle the redirect once admin status is confirmed.
     } catch (error) {
       let title = 'Login Failed';
       let description = 'An unexpected error occurred. Please try again.';
@@ -74,8 +73,6 @@ export default function LoginPage() {
 
   const isLoading = isUserLoading || isAdminLoading;
   
-  // If the user state is loading, or if the user is already a logged-in admin, show loading.
-  // This prevents the login form from flashing for an already authenticated admin.
   if (isLoading || (!isUserLoading && isAdmin)) {
     return (
       <div className="flex h-screen items-center justify-center">
