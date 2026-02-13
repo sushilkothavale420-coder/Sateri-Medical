@@ -1,11 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { Header } from '@/components/header';
 import { Button } from '@/components/ui/button';
 import { useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { Medicine, stockEntrySchema, type StockEntry } from '@/lib/types';
+import { Medicine, stockEntrySchema } from '@/lib/types';
 import { collection } from 'firebase/firestore';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -19,6 +18,10 @@ import { format } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
 import { useToast } from '@/hooks/use-toast';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandList } from '@/components/ui/command';
+import { z } from 'zod';
+
+type StockEntryFormValues = z.infer<typeof stockEntrySchema>;
+
 
 export default function StockManagementPage() {
   const firestore = useFirestore();
@@ -34,17 +37,18 @@ export default function StockManagementPage() {
   const { data: medicines, isLoading: isLoadingMedicines } = useCollection<Medicine>(medicinesQuery);
 
 
-  const form = useForm<StockEntry>({
+  const form = useForm<StockEntryFormValues>({
     resolver: zodResolver(stockEntrySchema),
     defaultValues: {
       medicineId: '',
+      medicineName: '',
       batchNumber: '',
       quantity: undefined,
       purchasePricePerSmallestUnit: undefined,
     },
   });
 
-  const onSubmit = (values: StockEntry) => {
+  const onSubmit = (values: StockEntryFormValues) => {
     if (!firestore || !user) return;
 
     if (!selectedMedicine) {
@@ -59,6 +63,7 @@ export default function StockManagementPage() {
 
     const newBatch = {
       medicineId: values.medicineId,
+      medicineName: values.medicineName,
       batchNumber: values.batchNumber,
       expiryDate: format(values.expiryDate, 'yyyy-MM-dd'),
       quantityInSmallestUnits,
@@ -85,7 +90,6 @@ export default function StockManagementPage() {
   if (!isAdmin) {
     return (
       <div className="flex min-h-screen w-full flex-col">
-        <Header pageTitle="Stock Management" />
         <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
             <h1 className="text-lg font-semibold md:text-2xl">Access Denied</h1>
             <p>You do not have permission to view this page.</p>
@@ -96,8 +100,8 @@ export default function StockManagementPage() {
 
   return (
     <div className="flex min-h-screen w-full flex-col">
-      <Header pageTitle="Stock Management" />
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+        <h1 className="text-lg font-semibold md:text-2xl">Stock Management</h1>
         <Card>
             <CardHeader>
                 <CardTitle>Add New Stock</CardTitle>
@@ -145,6 +149,7 @@ export default function StockManagementPage() {
                                             key={med.id}
                                             onSelect={() => {
                                               form.setValue("medicineId", med.id)
+                                              form.setValue("medicineName", med.name)
                                               setSelectedMedicine(med);
                                               setOpen(false)
                                             }}

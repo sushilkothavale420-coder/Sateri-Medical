@@ -210,13 +210,8 @@ service cloud.firestore {
        * @description Items within a sale.
        */
       match /sale_items/{saleItemId} {
-        
-        function canAccessParentSale() {
-          return isAdmin();
-        }
-
-        allow get: if isSignedIn();
-        allow create, update, delete: if canAccessParentSale();
+        allow get, list: if isAdmin();
+        allow create, update, delete: if isAdmin();
       }
     }
     
@@ -253,7 +248,7 @@ service cloud.firestore {
      * @description Allows collection group query on sale_items for dashboard analytics.
      */
     match /{path=**}/sale_items/{saleItemId} {
-       allow list: if isSignedIn();
+       allow list: if isAdmin();
     }
   }
 }

@@ -169,6 +169,10 @@
           "type": "string",
           "description": "Reference to Medicine. (Relationship: Medicine 1:N Batch)"
         },
+        "medicineName": {
+            "type": "string",
+            "description": "Denormalized name of the medicine for efficient lookups."
+        },
         "batchNumber": {
           "type": "string",
           "description": "The manufacturer-assigned batch number for this specific production lot of medicine."
@@ -209,6 +213,7 @@
       "required": [
         "id",
         "medicineId",
+        "medicineName",
         "batchNumber",
         "expiryDate",
         "quantityInSmallestUnits",

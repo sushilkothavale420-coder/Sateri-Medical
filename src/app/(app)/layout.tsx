@@ -2,9 +2,12 @@
 
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/app-sidebar';
-import { useUser } from '@/firebase';
+import { useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
+import { Header } from '@/components/header';
+import { collection } from 'firebase/firestore';
+import { Batch } from '@/lib/types';
 
 export default function AppLayout({
   children,
@@ -13,6 +16,26 @@ export default function AppLayout({
 }) {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
+  const firestore = useFirestore();
+
+  const batchesQuery = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'batches') : null),
+    [firestore]
+  );
+  const { data: batches } = useCollection<Batch>(batchesQuery);
+
+  const expiringNotifications = useMemo(() => {
+    if (!batches) return [];
+    
+    const today = new Date();
+    const thirtyDaysFromNow = new Date();
+    thirtyDaysFromNow.setDate(today.getDate() + 30);
+
+    return batches.filter(batch => {
+      const expiryDate = new Date(batch.expiryDate);
+      return expiryDate <= thirtyDaysFromNow;
+    }).sort((a,b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime());
+  }, [batches]);
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -31,7 +54,10 @@ export default function AppLayout({
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset>{children}</SidebarInset>
+      <SidebarInset>
+        <Header notifications={expiringNotifications} />
+        {children}
+      </SidebarInset>
     </SidebarProvider>
   );
 }

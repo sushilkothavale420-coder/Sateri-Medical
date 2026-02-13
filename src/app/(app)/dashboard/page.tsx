@@ -1,13 +1,29 @@
 'use client';
 
-import { Header } from "@/components/header";
+import {
+  AlertTriangle,
+  Boxes,
+  DollarSign,
+  PackageCheck,
+  TrendingUp,
+} from 'lucide-react';
+import { collection, collectionGroup, limit, orderBy, query } from 'firebase/firestore';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  useCollection,
+  useFirestore,
+  useMemoFirebase,
+  useUser,
+} from '@/firebase';
+
+import { Batch, Customer, Sale, SaleItem } from '@/lib/types';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -15,26 +31,18 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import {
-  AlertTriangle,
-  Boxes,
-  PackageCheck,
-  DollarSign,
-  TrendingUp
-} from "lucide-react";
-import { SalesChart } from "./components/sales-chart";
-import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
-import { collectionGroup, query, orderBy, limit, collection } from "firebase/firestore";
-import { Sale, SaleItem, Customer } from "@/lib/types";
-import { useEffect, useMemo, useState } from "react";
-import { format } from "date-fns";
+} from '@/components/ui/table';
+import { SalesChart } from './components/sales-chart';
+import { format } from 'date-fns';
 
 export default function DashboardPage() {
   const firestore = useFirestore();
   const { user } = useUser();
-  const [customerNames, setCustomerNames] = useState<Record<string, string>>({});
-  
+  const [customerNames, setCustomerNames] = useState<Record<string, string>>(
+    {}
+  );
+  const [expiringSoonCount, setExpiringSoonCount] = useState(0);
+
   const recentSalesQuery = useMemoFirebase(
     () => {
       if (!firestore || !user) return null;
@@ -43,13 +51,15 @@ export default function DashboardPage() {
     },
     [firestore, user]
   );
-  const { data: recentSales, isLoading: isLoadingRecentSales } = useCollection<Sale>(recentSalesQuery);
+  const { data: recentSales, isLoading: isLoadingRecentSales } =
+    useCollection<Sale>(recentSalesQuery);
 
   const customersQuery = useMemoFirebase(
     () => (firestore ? collection(firestore, 'customers') : null),
     [firestore]
   );
-  const { data: customers, isLoading: isLoadingCustomers } = useCollection<Customer>(customersQuery);
+  const { data: customers, isLoading: isLoadingCustomers } =
+    useCollection<Customer>(customersQuery);
 
   const saleItemsQuery = useMemoFirebase(
     () => {
@@ -58,52 +68,88 @@ export default function DashboardPage() {
     },
     [firestore, user]
   );
-  const { data: saleItems, isLoading: isLoadingSaleItems } = useCollection<SaleItem>(saleItemsQuery);
+  const { data: saleItems, isLoading: isLoadingSaleItems } =
+    useCollection<SaleItem>(saleItemsQuery);
+  
+  const batchesQuery = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'batches') : null),
+    [firestore]
+  );
+  const { data: batches, isLoading: isLoadingBatches } =
+    useCollection<Batch>(batchesQuery);
 
-  const isLoading = isLoadingRecentSales || isLoadingCustomers || isLoadingSaleItems;
+  const isLoading =
+    isLoadingRecentSales ||
+    isLoadingCustomers ||
+    isLoadingSaleItems ||
+    isLoadingBatches;
 
   useEffect(() => {
     if (customers) {
-      const names = customers.reduce((acc, customer) => {
-        acc[customer.id] = customer.name;
-        return acc;
-      }, {} as Record<string, string>);
+      const names = customers.reduce(
+        (acc, customer) => {
+          acc[customer.id] = customer.name;
+          return acc;
+        },
+        {} as Record<string, string>
+      );
       setCustomerNames(names);
     }
   }, [customers]);
+
+  useEffect(() => {
+    if (batches) {
+      const today = new Date();
+      const thirtyDaysFromNow = new Date();
+      thirtyDaysFromNow.setDate(today.getDate() + 30);
+
+      const soonToExpire = batches.filter(batch => {
+        const expiryDate = new Date(batch.expiryDate);
+        return expiryDate >= today && expiryDate <= thirtyDaysFromNow;
+      });
+      setExpiringSoonCount(soonToExpire.length);
+    }
+  }, [batches]);
 
   const { totalRevenue, totalProfit } = useMemo(() => {
     if (!saleItems) {
       return { totalRevenue: 0, totalProfit: 0 };
     }
-    const revenue = saleItems.reduce((acc, item) => acc + item.itemTotalWithTax, 0);
+    const revenue = saleItems.reduce(
+      (acc, item) => acc + item.itemTotalWithTax,
+      0
+    );
     const profit = saleItems.reduce((acc, item) => {
-      const itemProfit = (item.unitSellingPrice - (item.purchasePriceAtSale || 0)) * item.quantitySold;
+      const itemProfit =
+        (item.unitSellingPrice - (item.purchasePriceAtSale || 0)) *
+        item.quantitySold;
       return acc + itemProfit;
     }, 0);
-    return { 
-      totalRevenue: revenue, 
+    return {
+      totalRevenue: revenue,
       totalProfit: profit,
     };
   }, [saleItems]);
-  
+
   const salesChartData = useMemo(() => {
     if (!saleItems) return [];
 
     const monthlySales: Record<string, { total: number }> = {};
 
     saleItems.forEach(item => {
-        const createdAt = item.createdAt;
-        if (!createdAt) return;
+      const createdAt = item.createdAt;
+      if (!createdAt) return;
 
-        // Handle both Firestore Timestamp and ISO string
-        const date = (createdAt as any).toDate ? (createdAt as any).toDate() : new Date(createdAt as string);
-        const monthKey = format(date, 'yyyy-MM');
-        
-        if (!monthlySales[monthKey]) {
-            monthlySales[monthKey] = { total: 0 };
-        }
-        monthlySales[monthKey].total += item.itemTotalWithTax;
+      // Handle both Firestore Timestamp and ISO string
+      const date = (createdAt as any).toDate
+        ? (createdAt as any).toDate()
+        : new Date(createdAt as string);
+      const monthKey = format(date, 'yyyy-MM');
+
+      if (!monthlySales[monthKey]) {
+        monthlySales[monthKey] = { total: 0 };
+      }
+      monthlySales[monthKey].total += item.itemTotalWithTax;
     });
 
     const data = [];
@@ -118,19 +164,18 @@ export default function DashboardPage() {
       });
     }
     return data;
+  }, [saleItems]);
 
-}, [saleItems]);
-
-  const formatCurrency = (amount: number) => new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-  }).format(amount);
-
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+    }).format(amount);
 
   return (
     <div className="flex min-h-screen w-full flex-col">
-      <Header pageTitle="Dashboard" />
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-background">
+        <h1 className="text-lg font-semibold md:text-2xl">Dashboard</h1>
         {isLoading ? (
           <p>Loading dashboard...</p>
         ) : (
@@ -138,11 +183,15 @@ export default function DashboardPage() {
             <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    Total Revenue
+                  </CardTitle>
                   <DollarSign className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
+                  <div className="text-2xl font-bold">
+                    {formatCurrency(totalRevenue)}
+                  </div>
                   <p className="text-xs text-muted-foreground">
                     Total revenue from all sales
                   </p>
@@ -150,11 +199,15 @@ export default function DashboardPage() {
               </Card>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Net Profit</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    Net Profit
+                  </CardTitle>
                   <TrendingUp className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{formatCurrency(totalProfit)}</div>
+                  <div className="text-2xl font-bold">
+                    {formatCurrency(totalProfit)}
+                  </div>
                   <p className="text-xs text-muted-foreground">
                     Estimated profit from all sales
                   </p>
@@ -168,17 +221,17 @@ export default function DashboardPage() {
                   <AlertTriangle className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">
-                    0
-                  </div>
-                  <div className="text-xs text-muted-foreground flex gap-2">
-                    No expiry data available
-                  </div>
+                  <div className="text-2xl font-bold">{expiringSoonCount}</div>
+                  <p className="text-xs text-muted-foreground">
+                    Items expiring in the next 30 days
+                  </p>
                 </CardContent>
               </Card>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Sales</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    Total Sales
+                  </CardTitle>
                   <PackageCheck className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
@@ -221,9 +274,15 @@ export default function DashboardPage() {
                         recentSales.map(sale => (
                           <TableRow key={sale.id}>
                             <TableCell>
-                              <div className="font-medium">{sale.customerId ? customerNames[sale.customerId] || 'Walk-in' : 'Walk-in'}</div>
+                              <div className="font-medium">
+                                {sale.customerId
+                                  ? customerNames[sale.customerId] || 'Walk-in'
+                                  : 'Walk-in'}
+                              </div>
                             </TableCell>
-                            <TableCell className="text-right">{formatCurrency(sale.totalAmountDue)}</TableCell>
+                            <TableCell className="text-right">
+                              {formatCurrency(sale.totalAmountDue)}
+                            </TableCell>
                           </TableRow>
                         ))
                       ) : (

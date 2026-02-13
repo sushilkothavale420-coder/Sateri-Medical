@@ -21,13 +21,26 @@ export type Medicine = z.infer<typeof medicineSchema> & {
 
 export const stockEntrySchema = z.object({
   medicineId: z.string().min(1, "Please select a medicine."),
+  medicineName: z.string().min(1, "Medicine name is required."),
   batchNumber: z.string().min(1, "Batch number is required."),
   expiryDate: z.date({ required_error: "Expiry date is required." }),
   quantity: z.coerce.number().min(1, "Quantity must be at least 1."),
   purchasePricePerSmallestUnit: z.coerce.number().min(0, "Purchase price is required."),
 });
 
-export type StockEntry = z.infer<typeof stockEntrySchema>;
+export type Batch = {
+  id: string;
+  medicineId: string;
+  medicineName: string;
+  batchNumber: string;
+  expiryDate: string;
+  quantityInSmallestUnits: number;
+  purchasePricePerSmallestUnit: number;
+  supplierId: string;
+  receivedAt: any;
+  createdAt: any;
+  updatedAt: any;
+};
 
 export type UserProfile = {
   id: string;
