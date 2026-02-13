@@ -18,7 +18,6 @@ import {
   Truck,
   BarChart2,
   Settings,
-  LifeBuoy,
   LogOut,
   Handshake,
 } from 'lucide-react';
@@ -41,7 +40,7 @@ export function AppSidebar() {
   const auth = useAuth();
 
   return (
-    <Sidebar>
+    <Sidebar collapsible="offcanvas">
       <SidebarHeader>
         <div className="flex items-center gap-2">
           <h1 className="text-xl font-headline font-semibold text-sidebar-foreground">
@@ -76,12 +75,6 @@ export function AppSidebar() {
                   <Settings />
                   <span>Settings</span>
                 </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton tooltip={{ children: 'Support' }}>
-              <LifeBuoy />
-              <span>Support</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
