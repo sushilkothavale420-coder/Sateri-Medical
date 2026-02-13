@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Header } from '@/components/header';
 import { Button } from '@/components/ui/button';
-import { useFirestore, useUser } from '@/firebase';
+import { useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Medicine, stockEntrySchema, type StockEntry } from '@/lib/types';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection } from 'firebase/firestore';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,7 +18,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
 import { useToast } from '@/hooks/use-toast';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandList } from '@/components/ui/command';
 
 export default function StockManagementPage() {
   const firestore = useFirestore();
@@ -26,25 +26,12 @@ export default function StockManagementPage() {
   const { toast } = useToast();
   const [open, setOpen] = useState(false)
   const [selectedMedicine, setSelectedMedicine] = useState<Medicine | null>(null);
-  const [medicines, setMedicines] = useState<Medicine[]>([]);
-  const [isLoadingMedicines, setIsLoadingMedicines] = useState(true);
 
-  useEffect(() => {
-    if (!firestore) return;
-    const fetchMedicines = async () => {
-      setIsLoadingMedicines(true);
-      try {
-        const querySnapshot = await getDocs(collection(firestore, 'medicines'));
-        const medicinesData = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as Medicine[];
-        setMedicines(medicinesData);
-      } catch (error) {
-        console.error("Error fetching medicines:", error);
-      } finally {
-        setIsLoadingMedicines(false);
-      }
-    };
-    fetchMedicines();
-  }, [firestore]);
+  const medicinesQuery = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'medicines') : null),
+    [firestore]
+  );
+  const { data: medicines, isLoading: isLoadingMedicines } = useCollection<Medicine>(medicinesQuery);
 
 
   const form = useForm<StockEntry>({
@@ -149,30 +136,32 @@ export default function StockManagementPage() {
                                 <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                                   <Command>
                                     <CommandInput placeholder="Search medicine..." />
-                                    <CommandEmpty>No medicine found.</CommandEmpty>
-                                    <CommandGroup>
-                                      {medicines?.map((med) => (
-                                        <CommandItem
-                                          value={med.name}
-                                          key={med.id}
-                                          onSelect={() => {
-                                            form.setValue("medicineId", med.id)
-                                            setSelectedMedicine(med);
-                                            setOpen(false)
-                                          }}
-                                        >
-                                          <Check
-                                            className={cn(
-                                              "mr-2 h-4 w-4",
-                                              med.id === field.value
-                                                ? "opacity-100"
-                                                : "opacity-0"
-                                            )}
-                                          />
-                                          {med.name}
-                                        </CommandItem>
-                                      ))}
-                                    </CommandGroup>
+                                    <CommandList>
+                                      <CommandEmpty>No medicine found.</CommandEmpty>
+                                      <CommandGroup>
+                                        {medicines?.map((med) => (
+                                          <CommandItem
+                                            value={med.name}
+                                            key={med.id}
+                                            onSelect={() => {
+                                              form.setValue("medicineId", med.id)
+                                              setSelectedMedicine(med);
+                                              setOpen(false)
+                                            }}
+                                          >
+                                            <Check
+                                              className={cn(
+                                                "mr-2 h-4 w-4",
+                                                med.id === field.value
+                                                  ? "opacity-100"
+                                                  : "opacity-0"
+                                              )}
+                                            />
+                                            {med.name}
+                                          </CommandItem>
+                                        ))}
+                                      </CommandGroup>
+                                    </CommandList>
                                   </Command>
                                 </PopoverContent>
                               </Popover>

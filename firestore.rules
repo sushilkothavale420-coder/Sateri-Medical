@@ -269,9 +269,7 @@ service cloud.firestore {
      * @description Allows collection group query on sale_items for dashboard analytics.
      */
     match /{path=**}/sale_items/{saleItemId} {
-      allow list: if isSignedIn();
+       allow list: if isSignedIn();
     }
   }
 }
-
-    

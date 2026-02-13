@@ -25,51 +25,33 @@ import {
 } from "lucide-react";
 import { SalesChart } from "./components/sales-chart";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
-import { collectionGroup, query, orderBy, limit, collection, getDocs } from "firebase/firestore";
+import { collectionGroup, query, orderBy, limit, collection } from "firebase/firestore";
 import { Sale, SaleItem, Customer } from "@/lib/types";
 import { useEffect, useMemo, useState } from "react";
 
 export default function DashboardPage() {
   const firestore = useFirestore();
   const [customerNames, setCustomerNames] = useState<Record<string, string>>({});
-  const [saleItems, setSaleItems] = useState<SaleItem[]>([]);
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Keep recentSales as realtime for the dashboard widget
+  
   const recentSalesQuery = useMemoFirebase(
     () => (firestore ? query(collection(firestore, 'sales'), orderBy('saleDate', 'desc'), limit(5)) : null),
     [firestore]
   );
-  const { data: recentSales } = useCollection<Sale>(recentSalesQuery);
+  const { data: recentSales, isLoading: isLoadingRecentSales } = useCollection<Sale>(recentSalesQuery);
 
-  useEffect(() => {
-    if (!firestore) return;
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        const customersQuery = collection(firestore, 'customers');
-        const saleItemsQuery = collectionGroup(firestore, 'sale_items');
-        
-        const [customersSnapshot, saleItemsSnapshot] = await Promise.all([
-            getDocs(customersQuery),
-            getDocs(saleItemsQuery)
-        ]);
+  const customersQuery = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'customers') : null),
+    [firestore]
+  );
+  const { data: customers, isLoading: isLoadingCustomers } = useCollection<Customer>(customersQuery);
 
-        const customersData = customersSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as Customer[];
-        setCustomers(customersData);
+  const saleItemsQuery = useMemoFirebase(
+    () => (firestore ? collectionGroup(firestore, 'sale_items') : null),
+    [firestore]
+  );
+  const { data: saleItems, isLoading: isLoadingSaleItems } = useCollection<SaleItem>(saleItemsQuery);
 
-        const saleItemsData = saleItemsSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as SaleItem[];
-        setSaleItems(saleItemsData);
-
-      } catch (error) {
-          console.error("Error fetching dashboard data:", error);
-      } finally {
-          setIsLoading(false);
-      }
-    };
-    fetchData();
-  }, [firestore]);
+  const isLoading = isLoadingRecentSales || isLoadingCustomers || isLoadingSaleItems;
 
   useEffect(() => {
     if (customers) {
@@ -81,7 +63,7 @@ export default function DashboardPage() {
     }
   }, [customers]);
 
-  const { totalRevenue, totalProfit, totalSales } = useMemo(() => {
+  const { totalRevenue, totalProfit } = useMemo(() => {
     if (!saleItems) {
       return { totalRevenue: 0, totalProfit: 0, totalSales: 0 };
     }
@@ -93,9 +75,8 @@ export default function DashboardPage() {
     return { 
       totalRevenue: revenue, 
       totalProfit: profit,
-      totalSales: recentSales?.length || 0
     };
-  }, [saleItems, recentSales]);
+  }, [saleItems]);
   
   const formatCurrency = (amount: number) => new Intl.NumberFormat('en-IN', {
     style: 'currency',
@@ -158,9 +139,9 @@ export default function DashboardPage() {
                   <PackageCheck className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{totalSales}</div>
+                  <div className="text-2xl font-bold">{saleItems?.length}</div>
                   <p className="text-xs text-muted-foreground">
-                    Total sales transactions recorded
+                    Total items sold across all sales
                   </p>
                 </CardContent>
               </Card>
