@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, doc, writeBatch, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, writeBatch } from 'firebase/firestore';
 import { Medicine, Customer } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -116,10 +116,11 @@ export function PosTerminal() {
     setIsSubmitting(true);
     try {
       const batch = writeBatch(firestore);
+      const now = new Date().toISOString();
 
       const saleRef = doc(collection(firestore, 'sales'));
       const saleData = {
-        saleDate: new Date().toISOString(),
+        saleDate: now,
         customerId: selectedCustomer?.id || null,
         totalAmountBeforeTax: subtotal,
         totalTaxAmount: totalTax,
@@ -129,8 +130,8 @@ export function PosTerminal() {
         paymentMethod,
         invoiceNumber: `INV-${Date.now()}`,
         createdByUserId: user.uid,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+        createdAt: now,
+        updatedAt: now,
       };
       batch.set(saleRef, saleData);
 
@@ -150,7 +151,7 @@ export function PosTerminal() {
           itemTaxAmount: item.price * ((item.medicine.taxRateGst || 0) / 100),
           itemTotalWithTax: item.price * (1 + ((item.medicine.taxRateGst || 0) / 100)),
           createdByUserId: user.uid,
-          createdAt: serverTimestamp(),
+          createdAt: now,
         };
         batch.set(saleItemRef, saleItemData);
       }

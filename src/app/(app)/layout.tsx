@@ -52,12 +52,11 @@ export default function AppLayout({
       router.push('/login');
     } else if (!isAdmin) {
       // User is logged in but is not an admin.
-      // Sign them out and redirect to login with an error message.
-      auth.signOut();
+      // Redirect to login with an error message.
       router.push('/login?error=access-denied');
     }
     // If user is present and is an admin, render the children.
-  }, [user, isLoading, isAdmin, router, auth]);
+  }, [user, isLoading, isAdmin, router]);
 
 
   return (

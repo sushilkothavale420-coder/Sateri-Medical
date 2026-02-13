@@ -32,6 +32,9 @@ export default function LoginPage() {
   useEffect(() => {
     const error = searchParams.get('error');
     if (error === 'access-denied') {
+      if (auth.currentUser) {
+        auth.signOut();
+      }
       toast({
         variant: 'destructive',
         title: 'Access Denied',
@@ -40,11 +43,10 @@ export default function LoginPage() {
       // A clean URL is better for the user.
       router.replace('/login', { scroll: false });
     }
-  }, [searchParams, toast, router]);
+  }, [searchParams, toast, router, auth]);
 
   useEffect(() => {
-    // This effect handles an already-logged-in admin landing on this page,
-    // or a newly logged-in admin.
+    // If the user is successfully verified as an admin, redirect them.
     if (!isAdminLoading && isAdmin) {
       router.push('/dashboard');
     }
@@ -55,8 +57,8 @@ export default function LoginPage() {
     if (!auth) return;
     try {
       await initiateEmailSignIn(auth, loginEmail, loginPassword);
-      // On success, the useEffect hook will handle the redirect once the
-      // admin status is confirmed. This avoids a race condition.
+      // On success, the onAuthStateChanged listener in FirebaseProvider will trigger,
+      // and the useEffect hook above will handle the redirect once isAdmin is confirmed.
     } catch (error) {
       let title = 'Login Failed';
       let description = 'An unexpected error occurred. Please try again.';
@@ -88,9 +90,7 @@ export default function LoginPage() {
 
   const isLoading = isUserLoading || isAdminLoading;
   
-  // While loading, or if we know the user is an admin and is being redirected,
-  // show a loading indicator to prevent flashing the login form.
-  if (isLoading || (!isUserLoading && isAdmin)) {
+  if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div>Loading...</div>
@@ -98,8 +98,17 @@ export default function LoginPage() {
     );
   }
   
-  // If we're not loading AND the user is not an admin, we can safely show the login form.
-  // This handles both logged-out users and non-admin users who were signed out by the layout.
+  // If we have finished loading and the user is an admin, we are about to redirect.
+  // Show a loading indicator to prevent flashing the login form.
+  if (!isAdminLoading && isAdmin) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div>Loading...</div>
+      </div>
+    );
+  }
+  
+  // If we are not loading AND the user is NOT an admin, show the login form.
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-background">
        <div className="absolute top-8 left-8">
