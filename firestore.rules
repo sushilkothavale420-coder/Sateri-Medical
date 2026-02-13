@@ -3,10 +3,10 @@
  *
  * Core Philosophy:
  * This ruleset implements a strict Role-Based Access Control (RBAC) model.
- * There are two primary roles: 'Admin' and 'Retailer', defined in a user's
- * profile document in the `/users` collection. Admins have broad control over
- * core business data (inventory, suppliers, purchasing), while Retailers have
- * permissions focused on transactional data they create (sales).
+ * There is one primary Admin identified by a specific UID and a 'Retailer' role,
+ * defined in a user's profile document in the `/users` collection. The Admin has
+ * broad control over core business data, while Retailers have permissions
+ * focused on transactional data they create.
  *
  * Data Structure:
  * The data is organized into top-level collections for major entities (e.g.,
@@ -16,33 +16,15 @@
  *
  * Key Security Decisions:
  * - Default Deny: All access is denied by default. Rules only grant explicit permissions.
- * - User Privacy: Users can only read and modify their own user document. Listing
- *   users is strictly forbidden to prevent data scraping.
- * - Role-Based Access: A user's role is fetched from their /users/{userId} document
- *   to authorize actions. Almost all rules depend on `isAdmin()` or `isRetailer()`.
- * - Admin Supremacy: Admins have read access to almost all data and write access
- *   to core inventory and procurement collections.
+ * - Admin by UID: A specific user UID is designated as the Admin.
+ * - Retailer by Role: The 'Retailer' role is fetched from their /users/{userId} document.
+ * - Admin Supremacy: The Admin has read access to almost all data and write access
+ *   to core inventory, procurement, and user collections.
  * - Retailer Permissions: Retailers can read shared data like the medicine catalog
  *   but can only create/manage their own sales records.
  * - Immutability: Critical relational fields like a creator's ID (`createdByUserId`)
- *   or a document's own ID are enforced as immutable after creation to maintain
- *   data integrity and prevent authorization bypass.
+ *   are enforced as immutable after creation to maintain data integrity.
  *
- * Denormalization for Authorization:
- * To create simpler and more performant rules, data required for an authorization
- * decision is denormalized onto the documents being secured. For example, a `/sales`
- * document contains a `createdByUserId` field. This allows a simple rule like
- * `isOwner(resource.data.createdByUserId)` without needing extra lookups.
- * For subcollections like `/sales/{saleId}/items`, rules must perform a `get()` on
- * the parent sale document to check for ownership. For improved performance, it is
- * recommended to denormalize the `createdByUserId` from the parent sale directly onto
- * each sale item document.
- *
- * Structural Segregation:
- * The data is naturally segregated by collection based on access patterns. Core
- * inventory data (e.g., `/medicines`) is in one collection, while user-specific
- * transactional data (e.g., `/sales`) is in another. This clear separation makes
- * rules for list operations more secure and efficient.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -61,7 +43,6 @@ service cloud.firestore {
 
     /**
      * Returns true if the requesting user's UID matches the provided userId.
-     * Use for rules on a user's own data or documents they own.
      */
     function isOwner(userId) {
       return request.auth.uid == userId;
@@ -69,7 +50,6 @@ service cloud.firestore {
 
     /**
       * Checks if a document exists before an operation.
-      * CRITICAL for all update and delete operations.
       */
     function isExistingDoc() {
       return resource != null;
@@ -77,17 +57,16 @@ service cloud.firestore {
 
     /**
      * Returns the user's role from their document in the /users collection.
-     * Caches the result per request for efficiency.
      */
     function getUserRole() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
     }
 
     /**
-     * Returns true if the authenticated user has the 'Admin' role.
+     * Returns true if the authenticated user is the designated Admin.
      */
     function isAdmin() {
-      return isSignedIn() && getUserRole() == 'Admin';
+      return isSignedIn() && request.auth.uid == 'a6jWnMQZfLY82mBA3g0DIMxYRFZ2';
     }
 
     /**
@@ -99,7 +78,6 @@ service cloud.firestore {
 
     /**
      * Validates that the creator ID in a new document matches the authenticated user.
-     * Used for `create` operations to enforce ownership.
      */
     function isCreator(fieldName) {
       return request.resource.data[fieldName] == request.auth.uid;
@@ -107,7 +85,6 @@ service cloud.firestore {
 
     /**
      * Validates that an ownership field has not been changed during an update.
-     * Used for `update` operations to enforce immutable ownership.
      */
     function isImmutable(fieldName) {
       return request.resource.data[fieldName] == resource.data[fieldName];
@@ -115,7 +92,6 @@ service cloud.firestore {
     
     /**
      * Validates that a user is the owner of an existing document.
-     * A common, robust check for update/delete operations on owned documents.
      */
     function isExistingOwner(ownerId) {
       return isExistingDoc() && isOwner(ownerId);
@@ -126,13 +102,10 @@ service cloud.firestore {
     // -------------------------------------------------------------------------
 
     /**
-     * @description Manages user profiles and their roles.
+     * @description Manages user profiles. Only Admin can create users.
      * @path /users/{userId}
-     * @allow (create) An admin creating a new user profile document.
-     * @allow (get, update) An existing user reading or updating their own profile.
-     * @deny (list) Any user trying to list all user profiles.
-     * @deny (get) A user trying to read another user's profile.
-     * @principle Restricts access to a user's own data tree, with admin oversight.
+     * @allow (create, list, delete) Admin can manage all user profiles.
+     * @allow (get, update) An existing user can read/update their own profile.
      */
     match /users/{userId} {
       allow get: if isOwner(userId) || isAdmin();
@@ -148,11 +121,6 @@ service cloud.firestore {
 
     /**
      * @description Generic chemical compositions. Managed by Admins, readable by all users.
-     * @path /medicine_compositions/{compositionId}
-     * @allow (get, list) Any authenticated user reading composition data.
-     * @allow (create, update, delete) An Admin managing compositions.
-     * @deny (create) A Retailer trying to add a new composition.
-     * @principle Centralized management of shared data by a privileged role.
      */
     match /medicine_compositions/{compositionId} {
       allow get, list: if isSignedIn();
@@ -161,11 +129,6 @@ service cloud.firestore {
 
     /**
      * @description Specific medicine products. Managed by Admins, readable by all users.
-     * @path /medicines/{medicineId}
-     * @allow (get, list) Any authenticated user browsing the medicine catalog.
-     * @allow (create, update, delete) An Admin managing the medicine catalog.
-     * @deny (update) A Retailer trying to change a medicine's price.
-     * @principle Centralized management of shared data by a privileged role.
      */
     match /medicines/{medicineId} {
       allow get, list: if isSignedIn();
@@ -174,11 +137,6 @@ service cloud.firestore {
 
     /**
      * @description Individual batches of medicine. Managed by Admins, readable by all users.
-     * @path /batches/{batchId}
-     * @allow (get, list) Any authenticated user viewing batch details (e.g., expiry).
-     * @allow (create, update, delete) An Admin managing inventory batches.
-     * @deny (create) A Retailer trying to add a new batch of medicine.
-     * @principle Centralized management of shared data by a privileged role.
      */
     match /batches/{batchId} {
       allow get, list: if isSignedIn();
@@ -187,11 +145,6 @@ service cloud.firestore {
 
     /**
      * @description Supplier information. Managed by Admins, readable by all users.
-     * @path /suppliers/{supplierId}
-     * @allow (get, list) Any authenticated user viewing supplier information.
-     * @allow (create, update, delete) An Admin managing supplier records.
-     * @deny (delete) A Retailer trying to remove a supplier.
-     * @principle Centralized management of shared data by a privileged role.
      */
     match /suppliers/{supplierId} {
       allow get, list: if isSignedIn();
@@ -204,44 +157,26 @@ service cloud.firestore {
 
     /**
      * @description Purchase orders to suppliers. Fully managed by Admins.
-     * @path /purchase_orders/{purchaseOrderId}
-     * @allow (create, get, list, update, delete) An Admin performing any action.
-     * @deny (get) A Retailer trying to view a purchase order.
-     * @principle Restricts sensitive business operations to a privileged role.
      */
     match /purchase_orders/{purchaseOrderId} {
       allow get, list, create, update, delete: if isAdmin();
 
       /**
-       * @description Items within a purchase order. Access is inherited from the parent PO.
-       * @path /purchase_orders/{purchaseOrderId}/items/{purchaseOrderItemId}
-       * @allow (get) An Admin reading an item from a purchase order they can access.
-       * @deny (create) A Retailer trying to add an item to a purchase order.
-       * @principle Secures a subcollection by checking permissions on the parent document.
+       * @description Items within a purchase order.
        */
       match /items/{purchaseOrderItemId} {
-        // This rule uses get() on the parent. For better performance, denormalize
-        // an owner/admin ID onto each item document.
         allow get, list, create, update, delete: if isAdmin() && exists(/databases/$(database)/documents/purchase_orders/$(purchaseOrderId));
       }
     }
 
     /**
      * @description Records for returning medicine to vendors. Fully managed by Admins.
-     * @path /returns_to_vendor/{returnToVendorId}
-     * @allow (create, get, list, update, delete) An Admin performing any action.
-     * @deny (get) A Retailer trying to view a return record.
-     * @principle Restricts sensitive business operations to a privileged role.
      */
     match /returns_to_vendor/{returnToVendorId} {
       allow get, list, create, update, delete: if isAdmin();
 
       /**
-       * @description Items being returned to a vendor. Access is inherited from the parent return.
-       * @path /returns_to_vendor/{returnToVendorId}/items/{returnToVendorItemId}
-       * @allow (get) An Admin reading an item from a return they can access.
-       * @deny (create) A Retailer trying to add an item to a return record.
-       * @principle Secures a subcollection by checking permissions on the parent document.
+       * @description Items being returned to a vendor.
        */
       match /items/{returnToVendorItemId} {
         allow get, list, create, update, delete: if isAdmin() && exists(/databases/$(database)/documents/returns_to_vendor/$(returnToVendorId));
@@ -253,29 +188,17 @@ service cloud.firestore {
     // -------------------------------------------------------------------------
 
     /**
-     * @description Customer records. Managed by Admins, readable by all users for sales.
-     * @path /customers/{customerId}
-     * @allow (get, list) Any authenticated user to look up customers for a sale.
-     * @allow (create, update, delete) An Admin managing the customer list.
-     * @deny (create) A Retailer trying to create a new permanent customer record.
-     * @principle Centralized management with broad read access for business operations.
+     * @description Customer records. Managed by Admins, readable by all users.
      */
     match /customers/{customerId} {
       allow get, list: if isSignedIn();
       allow create, update, delete: if isAdmin();
       
       /**
-       * @description Customer financial transactions. Writable by all, but only to their own transactions.
-       * @path /customers/{customerId}/transactions/{transactionId}
-       * @allow (create) Any auth user creating a transaction and setting themselves as creator.
-       * @allow (get) Any auth user reading any transaction.
-       * @allow (update, delete) The original creator of a transaction modifying it.
-       * @deny (update) A Retailer trying to modify a transaction created by an Admin.
-       * @principle Enforces document ownership for writes while allowing broader reads.
+       * @description Customer financial transactions.
        */
       match /transactions/{transactionId} {
         allow get, list: if isSignedIn();
-        // Updated: Restrict transaction creation to Admins or Retailers, aligning with RBAC.
         allow create: if isCreator('createdByUserId') && (isRetailer() || isAdmin()) && exists(/databases/$(database)/documents/customers/$(customerId));
         allow update: if isExistingOwner(resource.data.createdByUserId) && isImmutable('createdByUserId');
         allow delete: if isExistingOwner(resource.data.createdByUserId);
@@ -284,33 +207,18 @@ service cloud.firestore {
 
     /**
      * @description Sales records. Retailers manage their own, Admins can read all.
-     * @path /sales/{saleId}
-     * @allow (create) A user creating a sale and assigning themselves as the creator.
-     * @allow (get) The user who created the sale OR any Admin.
-     * @allow (list) An Admin viewing a list of all sales for reporting.
-     * @allow (update, delete) The original creator of the sale.
-     * @deny (list) A Retailer trying to list all sales in the system.
-     * @deny (update) An Admin trying to modify a Retailer's sale record.
-     * @principle Enforces document ownership for writes, with privileged role read access.
      */
     match /sales/{saleId} {
       allow get: if isAdmin() || isExistingOwner(resource.data.createdByUserId);
       allow list: if isAdmin();
-      // Updated: Restrict sale creation to Admins or Retailers, aligning with RBAC.
       allow create: if isCreator('createdByUserId') && (isRetailer() || isAdmin());
       allow update: if isExistingOwner(resource.data.createdByUserId) && isImmutable('createdByUserId');
       allow delete: if isExistingOwner(resource.data.createdByUserId);
 
       /**
-       * @description Items within a sale. Access is inherited from the parent sale.
-       * @path /sales/{saleId}/items/{saleItemId}
-       * @allow (get) The sale owner or an Admin reading the items of a sale.
-       * @deny (create) A user trying to add items to a sale they do not own.
-       * @principle Secures a subcollection by checking permissions on the parent document.
+       * @description Items within a sale.
        */
       match /items/{saleItemId} {
-        // This rule uses get() on the parent. For better performance, denormalize
-        // the `createdByUserId` from the sale onto each sale item.
         function canAccessParentSale() {
           let parentSale = get(/databases/$(database)/documents/sales/$(saleId)).data;
           return isAdmin() || isOwner(parentSale.createdByUserId);
@@ -327,15 +235,9 @@ service cloud.firestore {
 
     /**
      * @description Immutable log of stock changes. Create-only for users, read-only for Admins.
-     * @path /stock_adjustment_logs/{logId}
-     * @allow (create) An authenticated user creating a log entry for an action they took.
-     * @allow (get, list) An Admin reviewing the audit logs.
-     * @deny (update, delete) Any user trying to modify or delete a log entry.
-     * @principle Enforces immutability for audit trail integrity.
      */
     match /stock_adjustment_logs/{logId} {
       allow get, list: if isAdmin();
-      // Updated: Restrict stock adjustment log creation to Admins or Retailers.
       allow create: if isCreator('adjustedByUserId') && (isRetailer() || isAdmin());
       allow update: if false;
       allow delete: if false;
@@ -343,12 +245,6 @@ service cloud.firestore {
 
     /**
      * @description Requests between users (Admin/Retailer).
-     * @path /requests/{requestId}
-     * @allow (create) A user creating a request and setting themselves as the requester.
-     * @allow (get, update) The requester or the responder of the request.
-     * @deny (get) A user trying to read a request they are not a part of.
-     * @deny (delete) A user trying to delete a request (should be marked as 'Cancelled').
-     * @principle Grants access to a document to a specific list of collaborators.
      */
     match /requests/{requestId} {
       function isParticipant() {
@@ -357,7 +253,6 @@ service cloud.firestore {
 
       allow get: if isParticipant();
       allow list: if false;
-      // Updated: Restrict request creation to Admins or Retailers, as per description.
       allow create: if isCreator('requesterUserId') && (isRetailer() || isAdmin());
       allow update: if isExistingDoc() && isParticipant() && isImmutable('requesterUserId');
       allow delete: if false;

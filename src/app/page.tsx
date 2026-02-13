@@ -1,32 +1,13 @@
 'use client';
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useAuth } from '@/firebase';
-import { initiateEmailSignIn } from '@/firebase/non-blocking-login';
-import { useRouter } from 'next/navigation';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import Link from 'next/link';
 import { useUser } from '@/firebase';
+import { useRouter } from 'next/navigation';
 
-export default function AuthPage() {
-  const [loginEmail, setLoginEmail] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
-  const auth = useAuth();
-  const router = useRouter();
+export default function HomePage() {
   const { user, isUserLoading } = useUser();
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!auth) return;
-    initiateEmailSignIn(auth, loginEmail, loginPassword);
-  };
+  const router = useRouter();
 
   if (isUserLoading) {
     return (
@@ -40,47 +21,60 @@ export default function AuthPage() {
     router.push('/dashboard');
     return null;
   }
-
+  
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-background">
-      <div className="w-full max-w-md">
-        <h1 className="text-4xl font-headline text-center mb-6">Sateri Medical</h1>
-        <Card>
-          <CardHeader>
-            <CardTitle>Login</CardTitle>
-            <CardDescription>
-              Enter your credentials to access your account.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="login-email">Email</Label>
-                <Input
-                  id="login-email"
-                  type="email"
-                  placeholder="m@example.com"
-                  required
-                  value={loginEmail}
-                  onChange={(e) => setLoginEmail(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="login-password">Password</Label>
-                <Input
-                  id="login-password"
-                  type="password"
-                  required
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                />
-              </div>
-              <Button type="submit" className="w-full">
-                Login
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+      <div className="w-full max-w-4xl text-center">
+        <h1 className="text-5xl font-headline text-primary mb-4">
+          Welcome to Sateri Medical
+        </h1>
+        <p className="text-lg text-muted-foreground mb-12">
+          Your all-in-one solution for efficient pharmacy management. Streamline your inventory, sales, and customer relations with our powerful tools.
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+          <Card>
+            <CardHeader>
+              <CardTitle>Inventory Management</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>Track medicine stock, manage batches with expiry dates, and get low-stock alerts to ensure you never run out of critical supplies.</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Sales & Billing (POS)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>A fast and intuitive Point of Sale system to handle customer billing, manage payments, and keep a detailed record of all transactions.</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>User & Customer Management</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>Administer user roles, manage your customer database, and track customer account balances and transaction history with ease.</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Reporting & Analytics</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>Generate insightful reports on sales, inventory, and customer data to make informed business decisions and optimize your operations.</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="flex justify-center gap-4">
+          <Button asChild size="lg">
+            <Link href="/login">Login as Admin</Link>
+          </Button>
+          <Button asChild variant="secondary" size="lg">
+            <Link href="/login">Login as Retailer</Link>
+          </Button>
+        </div>
       </div>
     </main>
   );
