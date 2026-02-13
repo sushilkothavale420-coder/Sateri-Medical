@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useState } from 'react';
+import Link from 'next/link';
 
 type ColumnsProps = {
   suppliersWithExpiringBatches: Set<string>;
@@ -39,7 +40,9 @@ export const Columns = ({ suppliersWithExpiringBatches, onInitiateReturn }: Colu
                 title="This supplier has items that are expiring soon."
               />
             )}
-            <span>{supplier.name}</span>
+            <Link href={`/suppliers/${supplier.id}`} className="font-medium text-primary hover:underline">
+              {supplier.name}
+            </Link>
           </div>
         );
       },

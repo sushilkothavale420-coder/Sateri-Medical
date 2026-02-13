@@ -14,11 +14,14 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useRouter } from 'next/navigation';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 type OrderItem = {
   medicine: Medicine;
-  quantity: number; // in smallest units
-  pricePerUnit: number;
+  quantity: number;
+  units: 'Tablet' | 'Strip' | 'Box';
+  pricePerUnit: number; // Price per smallest unit (tablet)
+  totalSmallestUnits: number;
   totalPrice: number;
 };
 
@@ -38,6 +41,7 @@ export default function CreatePurchaseOrderPage() {
   
   const [selectedMedicine, setSelectedMedicine] = useState<Medicine | null>(null);
   const [quantity, setQuantity] = useState(1);
+  const [units, setUnits] = useState<'Tablet' | 'Strip' | 'Box'>('Strip');
   const [price, setPrice] = useState(0);
   
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
@@ -62,17 +66,30 @@ export default function CreatePurchaseOrderPage() {
       return;
     }
 
+    const tabletsPerStrip = selectedMedicine.tabletsPerStrip || 1;
+    const stripsPerBox = selectedMedicine.stripsPerBox || 1;
+
+    let totalSmallestUnits = 0;
+    if (units === 'Tablet') totalSmallestUnits = quantity;
+    else if (units === 'Strip') totalSmallestUnits = quantity * tabletsPerStrip;
+    else if (units === 'Box') totalSmallestUnits = quantity * stripsPerBox * tabletsPerStrip;
+
+    const totalPrice = totalSmallestUnits * price; // 'price' is price per smallest unit
+
     const newItem: OrderItem = {
       medicine: selectedMedicine,
       quantity,
+      units,
       pricePerUnit: price,
-      totalPrice: quantity * price,
+      totalSmallestUnits,
+      totalPrice,
     };
     
     setOrderItems(prev => [...prev, newItem]);
     // Reset form
     setSelectedMedicine(null);
     setQuantity(1);
+    setUnits('Strip');
     setPrice(0);
   };
 
@@ -120,7 +137,7 @@ export default function CreatePurchaseOrderPage() {
         const poItemData = {
           purchaseOrderId: poRef.id,
           medicineId: item.medicine.id,
-          requestedQuantity: item.quantity,
+          requestedQuantity: item.totalSmallestUnits,
           unitPriceAtOrder: item.pricePerUnit,
           totalPrice: item.totalPrice,
           createdAt: now,
@@ -166,7 +183,7 @@ export default function CreatePurchaseOrderPage() {
                         <CardTitle>Add Medicine to Order</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="grid grid-cols-1 md:grid-cols-10 gap-4 items-end">
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
                             <div className="md:col-span-4">
                                 <label className="text-sm font-medium">Medicine</label>
                                 <Popover open={medicinePopoverOpen} onOpenChange={setMedicinePopoverOpen}>
@@ -195,15 +212,28 @@ export default function CreatePurchaseOrderPage() {
                                 </Popover>
                             </div>
                             <div className="md:col-span-2">
-                                <label htmlFor='quantity' className="text-sm font-medium">Quantity (Units)</label>
+                                <label htmlFor='quantity' className="text-sm font-medium">Quantity</label>
                                 <Input id="quantity" type="number" value={quantity} onChange={e => setQuantity(Math.max(1, parseInt(e.target.value) || 1))} />
                             </div>
                             <div className="md:col-span-2">
-                                <label htmlFor='price' className="text-sm font-medium">Price per Unit</label>
+                                <label htmlFor='units' className="text-sm font-medium">Units</label>
+                                <Select value={units} onValueChange={(v: 'Tablet' | 'Strip' | 'Box') => setUnits(v)}>
+                                    <SelectTrigger id="units">
+                                        <SelectValue placeholder="Units" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Tablet">Tablet</SelectItem>
+                                        <SelectItem value="Strip">Strip</SelectItem>
+                                        <SelectItem value="Box">Box</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="md:col-span-2">
+                                <label htmlFor='price' className="text-sm font-medium">Price/Tablet</label>
                                 <Input id="price" type="number" step="0.01" value={price} onChange={e => setPrice(parseFloat(e.target.value) || 0)} />
                             </div>
                             <div className='md:col-span-2'>
-                                <Button onClick={handleAddItem} className="w-full">Add Item</Button>
+                                <Button onClick={handleAddItem} className="w-full">Add</Button>
                             </div>
                         </div>
                     </CardContent>
@@ -229,7 +259,7 @@ export default function CreatePurchaseOrderPage() {
                                 ) : orderItems.map((item, index) => (
                                     <TableRow key={index}>
                                         <TableCell className="font-medium">{item.medicine.name}</TableCell>
-                                        <TableCell className="text-center">{item.quantity}</TableCell>
+                                        <TableCell className="text-center">{item.quantity} {item.units}(s)</TableCell>
                                         <TableCell className="text-right">{formatCurrency(item.pricePerUnit)}</TableCell>
                                         <TableCell className="text-right">{formatCurrency(item.totalPrice)}</TableCell>
                                         <TableCell>
