@@ -41,7 +41,7 @@ export default function LoginPage() {
     if (!auth) return;
     try {
       await initiateEmailSignIn(auth, loginEmail, loginPassword);
-      // Let the useEffect handle the redirect once admin status is confirmed.
+      router.push('/dashboard');
     } catch (error) {
       let title = 'Login Failed';
       let description = 'An unexpected error occurred. Please try again.';
