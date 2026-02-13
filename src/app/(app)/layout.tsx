@@ -8,6 +8,7 @@ import { useEffect, useMemo } from 'react';
 import { Header } from '@/components/header';
 import { collection } from 'firebase/firestore';
 import { Batch } from '@/lib/types';
+import { useAdmin } from '@/hooks/use-admin';
 
 export default function AppLayout({
   children,
@@ -15,6 +16,7 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   const { user, isUserLoading } = useUser();
+  const { isAdmin, isLoading: isAdminLoading } = useAdmin();
   const router = useRouter();
   const firestore = useFirestore();
 
@@ -38,12 +40,20 @@ export default function AppLayout({
   }, [batches]);
 
   useEffect(() => {
-    if (!isUserLoading && !user) {
-      router.push('/login');
+    const totalLoading = isUserLoading || isAdminLoading;
+    if (!totalLoading) {
+      if (!user) {
+        router.push('/login');
+      } else if (!isAdmin) {
+        // If user is logged in but not an admin, deny access.
+        router.push('/login');
+      }
     }
-  }, [user, isUserLoading, router]);
+  }, [user, isUserLoading, isAdmin, isAdminLoading, router]);
 
-  if (isUserLoading || !user) {
+  const isLoading = isUserLoading || isAdminLoading;
+
+  if (isLoading || !user || !isAdmin) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div>Loading...</div>
