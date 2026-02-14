@@ -2,10 +2,8 @@
 
 import {
   AlertTriangle,
-  DollarSign,
-  CircleHelp,
 } from 'lucide-react';
-import { collection, query, where, orderBy, limit } from 'firebase/firestore';
+import { collection, query, where, orderBy, limit, documentId } from 'firebase/firestore';
 import { useEffect, useMemo, useState } from 'react';
 import {
   useCollection,
@@ -48,17 +46,30 @@ export default function DashboardPage() {
   );
   const { data: recentSales } = useCollection<Sale>(recentSalesQuery);
   
-  const allSalesQuery = useMemoFirebase(
-    () => (firestore && user ? collection(firestore, 'sales') : null),
-    [firestore, user]
-  );
-  const { data: allSales } = useCollection<Sale>(allSalesQuery);
+  const recentCustomerIds = useMemo(() => {
+      if (!recentSales) return [];
+      return [...new Set(recentSales.map(sale => sale.customerId).filter(id => id))];
+  }, [recentSales]);
 
-  const customersQuery = useMemoFirebase(
-    () => (firestore && user ? collection(firestore, 'customers') : null),
-    [firestore, user]
-  );
-  const { data: customers } = useCollection<Customer>(customersQuery);
+  const recentCustomersQuery = useMemoFirebase(() => {
+      if (!firestore || !user || recentCustomerIds.length === 0) return null;
+      return query(collection(firestore, 'customers'), where(documentId(), 'in', recentCustomerIds));
+  }, [firestore, user, recentCustomerIds]);
+  
+  const { data: recentCustomers } = useCollection<Customer>(recentCustomersQuery);
+
+  useEffect(() => {
+    if (recentCustomers) {
+      const names = recentCustomers.reduce(
+        (acc, customer) => {
+          acc[customer.id] = customer.name;
+          return acc;
+        },
+        {} as Record<string, string>
+      );
+      setCustomerNames(names);
+    }
+  }, [recentCustomers]);
 
   const expiringBatchesQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -73,39 +84,12 @@ export default function DashboardPage() {
     return query(
         collection(firestore, 'batches'),
         where('expiryDate', '>=', todayStr),
-        where('expiryDate', '<=', thirtyDaysFromNowStr)
+        where('expiryDate', '<=', thirtyDaysFromNowStr),
+        where('quantityInSmallestUnits', '>', 0)
     );
   }, [firestore, user]);
   const { data: expiringBatches } = useCollection<Batch>(expiringBatchesQuery);
   
-  useEffect(() => {
-    if (customers) {
-      const names = customers.reduce(
-        (acc, customer) => {
-          acc[customer.id] = customer.name;
-          return acc;
-        },
-        {} as Record<string, string>
-      );
-      setCustomerNames(names);
-    }
-  }, [customers]);
-  
-  const totalRevenue = useMemo(() => {
-    if (!allSales) {
-      return 0;
-    }
-    return allSales.reduce(
-      (acc, sale) => acc + sale.totalAmountDue,
-      0
-    );
-  }, [allSales]);
-
-  const totalDebt = useMemo(() => {
-    if (!customers) return 0;
-    return customers.reduce((acc, customer) => acc + (customer.debtAmount || 0), 0);
-  }, [customers]);
-
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('en-IN', {
       style: 'currency',
@@ -118,38 +102,6 @@ export default function DashboardPage() {
         <h1 className="text-lg font-semibold md:text-2xl">Dashboard</h1>
         <>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Total Revenue
-                </CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {formatCurrency(totalRevenue)}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Total revenue from all sales
-                </p>
-              </CardContent>
-            </Card>
-             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Total Credit (Udhar)
-                </CardTitle>
-                <CircleHelp className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {formatCurrency(totalDebt)}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Total outstanding from all customers
-                </p>
-              </CardContent>
-            </Card>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">

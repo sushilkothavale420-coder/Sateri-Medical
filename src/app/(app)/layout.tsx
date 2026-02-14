@@ -31,6 +31,7 @@ export default function AppLayout({
     return query(
       collection(firestore, 'batches'),
       where('expiryDate', '<=', thirtyDaysFromNowStr),
+      where('quantityInSmallestUnits', '>', 0),
       orderBy('expiryDate', 'asc')
     );
   }, [firestore, user]);
