@@ -1,9 +1,13 @@
 'use client';
 
 import {
-  AlertTriangle,
-} from 'lucide-react';
-import { collection, query, where, orderBy, limit, documentId } from 'firebase/firestore';
+  collection,
+  query,
+  limit,
+  documentId,
+  orderBy,
+  where,
+} from 'firebase/firestore';
 import { useEffect, useMemo, useState } from 'react';
 import {
   useCollection,
@@ -12,7 +16,7 @@ import {
   useUser,
 } from '@/firebase';
 
-import { Batch, Customer, Sale } from '@/lib/types';
+import { Customer, Sale } from '@/lib/types';
 import {
   Card,
   CardContent,
@@ -48,7 +52,9 @@ export default function DashboardPage() {
   
   const recentCustomerIds = useMemo(() => {
       if (!recentSales) return [];
-      return [...new Set(recentSales.map(sale => sale.customerId).filter(id => id))];
+      const customerIds = recentSales.map(sale => sale.customerId).filter((id): id is string => !!id);
+      if (customerIds.length === 0) return [];
+      return [...new Set(customerIds)];
   }, [recentSales]);
 
   const recentCustomersQuery = useMemoFirebase(() => {
@@ -71,25 +77,6 @@ export default function DashboardPage() {
     }
   }, [recentCustomers]);
 
-  const expiringBatchesQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-
-    const today = new Date();
-    const thirtyDaysFromNow = new Date();
-    thirtyDaysFromNow.setDate(today.getDate() + 30);
-
-    const todayStr = today.toISOString().split('T')[0];
-    const thirtyDaysFromNowStr = thirtyDaysFromNow.toISOString().split('T')[0];
-
-    return query(
-        collection(firestore, 'batches'),
-        where('expiryDate', '>=', todayStr),
-        where('expiryDate', '<=', thirtyDaysFromNowStr),
-        where('quantityInSmallestUnits', '>', 0)
-    );
-  }, [firestore, user]);
-  const { data: expiringBatches } = useCollection<Batch>(expiringBatchesQuery);
-  
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('en-IN', {
       style: 'currency',
@@ -101,22 +88,6 @@ export default function DashboardPage() {
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-background">
         <h1 className="text-lg font-semibold md:text-2xl">Dashboard</h1>
         <>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Expiring Soon
-                </CardTitle>
-                <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{expiringBatches?.length || 0}</div>
-                <p className="text-xs text-muted-foreground">
-                  Items expiring in the next 30 days
-                </p>
-              </CardContent>
-            </Card>
-          </div>
           <div className="grid gap-4 md:gap-8">
             <Card>
               <CardHeader>
