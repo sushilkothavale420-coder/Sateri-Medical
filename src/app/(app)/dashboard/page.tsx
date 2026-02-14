@@ -18,7 +18,7 @@ import {
 } from '@/firebase';
 import Link from 'next/link';
 
-import { Customer, Sale, Batch, SaleItem } from '@/lib/types';
+import { Customer, Sale, SaleItem } from '@/lib/types';
 import {
   Card,
   CardContent,
@@ -34,7 +34,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { IndianRupee, TriangleAlert } from 'lucide-react';
+import { IndianRupee } from 'lucide-react';
 import { format } from 'date-fns';
 import { SalesChart } from './components/sales-chart';
 
@@ -51,23 +51,6 @@ export default function DashboardPage() {
 
   const customersQuery = useMemoFirebase(() => (firestore && user ? collection(firestore, 'customers') : null), [firestore, user]);
   const { data: customers } = useCollection<Customer>(customersQuery);
-
-  const today = new Date();
-  const ninetyDaysFromNow = new Date();
-  ninetyDaysFromNow.setDate(today.getDate() + 90);
-  const todayString = format(today, 'yyyy-MM-dd');
-  const ninetyDaysFromNowString = format(ninetyDaysFromNow, 'yyyy-MM-dd');
-
-  const expiringSoonQuery = useMemoFirebase(() => {
-      if (!firestore || !user) return null;
-      return query(
-          collection(firestore, 'batches'),
-          where('expiryDate', '<=', ninetyDaysFromNowString),
-          where('expiryDate', '>=', todayString),
-          where('quantityInSmallestUnits', '>', 0)
-      );
-  }, [firestore, user, ninetyDaysFromNowString, todayString]);
-  const { data: expiringBatches } = useCollection<Batch>(expiringSoonQuery);
 
   const saleItemsQuery = useMemoFirebase(() => (firestore && user ? collectionGroup(firestore, 'sale_items') : null), [firestore, user]);
   const { data: allSaleItems } = useCollection<SaleItem>(saleItemsQuery);
@@ -93,7 +76,6 @@ export default function DashboardPage() {
   // --- Memoized Calculations ---
   const totalRevenue = useMemo(() => sales?.reduce((acc, sale) => acc + sale.totalAmountDue, 0) ?? 0, [sales]);
   const totalCredit = useMemo(() => customers?.reduce((acc, customer) => acc + customer.debtAmount, 0) ?? 0, [customers]);
-  const expiringSoonCount = expiringBatches?.length ?? 0;
   
   const netProfit = useMemo(() => {
     if (!allSaleItems) return 0;
@@ -149,7 +131,7 @@ export default function DashboardPage() {
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-background">
         <h1 className="text-lg font-semibold md:text-2xl">Dashboard</h1>
 
-        <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-3">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
@@ -177,18 +159,6 @@ export default function DashboardPage() {
               <div className="text-2xl font-bold">{formatCurrency(totalCredit)}</div>
             </CardContent>
           </Card>
-          <Link href="/stock?filter=expiring_soon">
-            <Card className="hover:bg-muted">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Expiring Soon</CardTitle>
-                <TriangleAlert className="h-4 w-4 text-destructive" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-destructive">{expiringSoonCount} Batches</div>
-                <p className="text-xs text-muted-foreground">In the next 90 days</p>
-              </CardContent>
-            </Card>
-          </Link>
         </div>
 
         <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
