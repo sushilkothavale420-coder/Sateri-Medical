@@ -8,9 +8,10 @@ import { useState } from 'react';
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  emptyMessage?: string;
 }
 
-export function BatchesDataTable<TData, TValue>({ columns, data }: DataTableProps<TData, TValue>) {
+export function BatchesDataTable<TData, TValue>({ columns, data, emptyMessage = "No batches found." }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   
@@ -70,7 +71,7 @@ export function BatchesDataTable<TData, TValue>({ columns, data }: DataTableProp
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No batches found.
+                  {emptyMessage}
                 </TableCell>
               </TableRow>
             )}

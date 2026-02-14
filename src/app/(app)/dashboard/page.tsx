@@ -7,6 +7,7 @@ import {
   documentId,
   orderBy,
   where,
+  collectionGroup,
 } from 'firebase/firestore';
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -15,8 +16,9 @@ import {
   useMemoFirebase,
   useUser,
 } from '@/firebase';
+import Link from 'next/link';
 
-import { Customer, Sale } from '@/lib/types';
+import { Customer, Sale, Batch, SaleItem } from '@/lib/types';
 import {
   Card,
   CardContent,
@@ -32,6 +34,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { IndianRupee, TriangleAlert } from 'lucide-react';
+import { format } from 'date-fns';
+import { SalesChart } from './components/sales-chart';
 
 export default function DashboardPage() {
   const firestore = useFirestore();
@@ -40,39 +45,95 @@ export default function DashboardPage() {
     {}
   );
 
-  const recentSalesQuery = useMemoFirebase(
-    () => {
+  // --- Data Queries ---
+  const salesQuery = useMemoFirebase(() => (firestore && user ? collection(firestore, 'sales') : null), [firestore, user]);
+  const { data: sales } = useCollection<Sale>(salesQuery);
+
+  const customersQuery = useMemoFirebase(() => (firestore && user ? collection(firestore, 'customers') : null), [firestore, user]);
+  const { data: customers } = useCollection<Customer>(customersQuery);
+
+  const today = new Date();
+  const ninetyDaysFromNow = new Date();
+  ninetyDaysFromNow.setDate(today.getDate() + 90);
+  const todayString = format(today, 'yyyy-MM-dd');
+  const ninetyDaysFromNowString = format(ninetyDaysFromNow, 'yyyy-MM-dd');
+
+  const expiringSoonQuery = useMemoFirebase(() => {
       if (!firestore || !user) return null;
-      const salesCollection = collection(firestore, 'sales');
-      return query(salesCollection, orderBy('saleDate', 'desc'), limit(5));
-    },
-    [firestore, user]
-  );
+      return query(
+          collection(firestore, 'batches'),
+          where('expiryDate', '<=', ninetyDaysFromNowString),
+          where('expiryDate', '>=', todayString),
+          where('quantityInSmallestUnits', '>', 0)
+      );
+  }, [firestore, user, ninetyDaysFromNowString, todayString]);
+  const { data: expiringBatches } = useCollection<Batch>(expiringSoonQuery);
+
+  const saleItemsQuery = useMemoFirebase(() => (firestore && user ? collectionGroup(firestore, 'sale_items') : null), [firestore, user]);
+  const { data: allSaleItems } = useCollection<SaleItem>(saleItemsQuery);
+
+  const recentSalesQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return query(collection(firestore, 'sales'), orderBy('saleDate', 'desc'), limit(5));
+  }, [firestore, user]);
   const { data: recentSales } = useCollection<Sale>(recentSalesQuery);
   
   const recentCustomerIds = useMemo(() => {
-      if (!recentSales) return [];
-      const customerIds = recentSales.map(sale => sale.customerId).filter((id): id is string => !!id);
-      if (customerIds.length === 0) return [];
-      return [...new Set(customerIds)];
+    if (!recentSales) return [];
+    const customerIds = recentSales.map(sale => sale.customerId).filter((id): id is string => !!id);
+    return customerIds.length > 0 ? [...new Set(customerIds)] : [];
   }, [recentSales]);
 
   const recentCustomersQuery = useMemoFirebase(() => {
-      if (!firestore || !user || recentCustomerIds.length === 0) return null;
-      return query(collection(firestore, 'customers'), where(documentId(), 'in', recentCustomerIds));
+    if (!firestore || !user || recentCustomerIds.length === 0) return null;
+    return query(collection(firestore, 'customers'), where(documentId(), 'in', recentCustomerIds));
   }, [firestore, user, recentCustomerIds]);
-  
   const { data: recentCustomers } = useCollection<Customer>(recentCustomersQuery);
+
+  // --- Memoized Calculations ---
+  const totalRevenue = useMemo(() => sales?.reduce((acc, sale) => acc + sale.totalAmountDue, 0) ?? 0, [sales]);
+  const totalCredit = useMemo(() => customers?.reduce((acc, customer) => acc + customer.debtAmount, 0) ?? 0, [customers]);
+  const expiringSoonCount = expiringBatches?.length ?? 0;
+  
+  const netProfit = useMemo(() => {
+    if (!allSaleItems) return 0;
+    return allSaleItems.reduce((acc, item) => {
+      const cost = (item.purchasePriceAtSale || 0) * item.quantitySold;
+      const profit = item.itemTotalWithTax - cost;
+      return acc + profit;
+    }, 0);
+  }, [allSaleItems]);
+
+  const salesByMonth = useMemo(() => {
+    if (!sales) return [];
+    const monthlySales: { [key: string]: number } = {};
+    sales.forEach(sale => {
+      const monthKey = format(new Date(sale.saleDate), 'yyyy-MM');
+      if (!monthlySales[monthKey]) {
+        monthlySales[monthKey] = 0;
+      }
+      monthlySales[monthKey] += sale.totalAmountDue;
+    });
+    
+    const data = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date();
+      d.setMonth(d.getMonth() - i);
+      const monthKey = format(d, 'yyyy-MM');
+      data.push({
+        month: format(d, 'MMM'),
+        total: monthlySales[monthKey] || 0,
+      });
+    }
+    return data;
+  }, [sales]);
 
   useEffect(() => {
     if (recentCustomers) {
-      const names = recentCustomers.reduce(
-        (acc, customer) => {
-          acc[customer.id] = customer.name;
-          return acc;
-        },
-        {} as Record<string, string>
-      );
+      const names = recentCustomers.reduce((acc, customer) => {
+        acc[customer.id] = customer.name;
+        return acc;
+      }, {} as Record<string, string>);
       setCustomerNames(names);
     }
   }, [recentCustomers]);
@@ -87,52 +148,98 @@ export default function DashboardPage() {
     <div className="flex min-h-screen w-full flex-col">
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-background">
         <h1 className="text-lg font-semibold md:text-2xl">Dashboard</h1>
-        <>
-          <div className="grid gap-4 md:gap-8">
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Sales</CardTitle>
-                <CardDescription>
-                  Your 5 most recent sales transactions.
-                </CardDescription>
+
+        <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+              <IndianRupee className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Net Profit</CardTitle>
+              <IndianRupee className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatCurrency(netProfit)}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Credit (Udhar)</CardTitle>
+              <IndianRupee className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatCurrency(totalCredit)}</div>
+            </CardContent>
+          </Card>
+          <Link href="/stock?filter=expiring_soon">
+            <Card className="hover:bg-muted">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Expiring Soon</CardTitle>
+                <TriangleAlert className="h-4 w-4 text-destructive" />
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Customer</TableHead>
-                      <TableHead className="text-right">Amount</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {recentSales && recentSales.length > 0 ? (
-                      recentSales.map(sale => (
-                        <TableRow key={sale.id}>
-                          <TableCell>
-                            <div className="font-medium">
-                              {sale.customerId
-                                ? customerNames[sale.customerId] || 'Walk-in'
-                                : 'Walk-in'}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {formatCurrency(sale.totalAmountDue)}
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={2} className="text-center">
-                          No recent sales.
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
+                <div className="text-2xl font-bold text-destructive">{expiringSoonCount} Batches</div>
+                <p className="text-xs text-muted-foreground">In the next 90 days</p>
               </CardContent>
             </Card>
-          </div>
-        </>
+          </Link>
+        </div>
+
+        <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
+          <Card className="xl:col-span-2">
+            <CardHeader>
+              <CardTitle>Sales Overview</CardTitle>
+              <CardDescription>Your sales performance over the last 6 months.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <SalesChart data={salesByMonth} />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Sales</CardTitle>
+              <CardDescription>Your 5 most recent sales transactions.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Customer</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {recentSales && recentSales.length > 0 ? (
+                    recentSales.map(sale => (
+                      <TableRow key={sale.id}>
+                        <TableCell>
+                          <div className="font-medium">
+                            {sale.customerId ? customerNames[sale.customerId] || 'Walk-in' : 'Walk-in'}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {formatCurrency(sale.totalAmountDue)}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={2} className="text-center h-24">
+                        No recent sales.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
       </main>
     </div>
   );

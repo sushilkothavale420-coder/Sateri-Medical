@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
@@ -24,10 +24,11 @@ import { Separator } from '@/components/ui/separator';
 import { Columns } from './components/columns';
 import { BatchesDataTable } from './components/batches-data-table';
 import { DeleteBatchDialog } from './components/delete-batch-dialog';
-
+import { useSearchParams } from 'next/navigation';
+import { Badge } from '@/components/ui/badge';
+import Link from 'next/link';
 
 type StockEntryFormValues = z.infer<typeof stockEntrySchema>;
-
 
 export default function StockManagementPage() {
   const firestore = useFirestore();
@@ -36,6 +37,10 @@ export default function StockManagementPage() {
   const { toast } = useToast();
   const [open, setOpen] = useState(false)
   const [selectedMedicine, setSelectedMedicine] = useState<Medicine | null>(null);
+
+  const searchParams = useSearchParams();
+  const filter = searchParams.get('filter');
+  const isFilteringExpiring = filter === 'expiring_soon';
 
   const batchesQuery = useMemoFirebase(
     () => (firestore && user ? query(collection(firestore, 'batches'), orderBy('receivedAt', 'desc')) : null),
@@ -49,6 +54,24 @@ export default function StockManagementPage() {
     [firestore, user]
   );
   const { data: medicines } = useCollection<Medicine>(medicinesQuery);
+
+  const filteredBatches = useMemo(() => {
+    if (!batches) return [];
+    if (isFilteringExpiring) {
+        const today = new Date();
+        const ninetyDaysFromNow = new Date();
+        ninetyDaysFromNow.setDate(today.getDate() + 90);
+        const todayString = format(today, 'yyyy-MM-dd');
+        const ninetyDaysFromNowString = format(ninetyDaysFromNow, 'yyyy-MM-dd');
+
+        return batches.filter(batch => 
+            batch.expiryDate >= todayString && 
+            batch.expiryDate <= ninetyDaysFromNowString &&
+            batch.quantityInSmallestUnits > 0
+        );
+    }
+    return batches;
+  }, [batches, isFilteringExpiring]);
 
 
   const form = useForm<StockEntryFormValues>({
@@ -297,7 +320,19 @@ export default function StockManagementPage() {
                 <CardDescription>View and manage all current batches in your inventory.</CardDescription>
             </CardHeader>
             <CardContent>
-                <BatchesDataTable columns={columns} data={batches || []} />
+              {isFilteringExpiring && (
+                  <div className="flex items-center gap-2 mb-4">
+                      <Badge variant="destructive">Filtering: Expiring Soon</Badge>
+                      <Button variant="ghost" size="sm" asChild>
+                          <Link href="/stock">Clear filter</Link>
+                      </Button>
+                  </div>
+              )}
+                <BatchesDataTable 
+                  columns={columns} 
+                  data={filteredBatches || []}
+                  emptyMessage={isFilteringExpiring ? "No batches are expiring in the next 90 days." : "No batches found."}
+                />
             </CardContent>
         </Card>
         
