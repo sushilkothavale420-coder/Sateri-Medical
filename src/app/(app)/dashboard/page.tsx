@@ -34,9 +34,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { IndianRupee } from 'lucide-react';
-import { format } from 'date-fns';
-import { SalesChart } from './components/sales-chart';
+import { IndianRupee, AlertTriangle } from 'lucide-react';
 
 export default function DashboardPage() {
   const firestore = useFirestore();
@@ -86,29 +84,6 @@ export default function DashboardPage() {
     }, 0);
   }, [allSaleItems]);
 
-  const salesByMonth = useMemo(() => {
-    if (!sales) return [];
-    const monthlySales: { [key: string]: number } = {};
-    sales.forEach(sale => {
-      const monthKey = format(new Date(sale.saleDate), 'yyyy-MM');
-      if (!monthlySales[monthKey]) {
-        monthlySales[monthKey] = 0;
-      }
-      monthlySales[monthKey] += sale.totalAmountDue;
-    });
-    
-    const data = [];
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date();
-      d.setMonth(d.getMonth() - i);
-      const monthKey = format(d, 'yyyy-MM');
-      data.push({
-        month: format(d, 'MMM'),
-        total: monthlySales[monthKey] || 0,
-      });
-    }
-    return data;
-  }, [sales]);
 
   useEffect(() => {
     if (recentCustomers) {
@@ -131,7 +106,7 @@ export default function DashboardPage() {
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-background">
         <h1 className="text-lg font-semibold md:text-2xl">Dashboard</h1>
 
-        <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
@@ -159,19 +134,23 @@ export default function DashboardPage() {
               <div className="text-2xl font-bold">{formatCurrency(totalCredit)}</div>
             </CardContent>
           </Card>
+           <Card className="border-destructive">
+            <Link href="/stock?filter=expiring_soon">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-destructive">Expiring Soon</CardTitle>
+                <AlertTriangle className="h-4 w-4 text-destructive" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-destructive">View Items</div>
+                <p className="text-xs text-muted-foreground">
+                  Click to see items expiring in the next 90 days.
+                </p>
+              </CardContent>
+            </Link>
+          </Card>
         </div>
 
-        <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
-          <Card className="xl:col-span-2">
-            <CardHeader>
-              <CardTitle>Sales Overview</CardTitle>
-              <CardDescription>Your sales performance over the last 6 months.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <SalesChart data={salesByMonth} />
-            </CardContent>
-          </Card>
-          <Card>
+        <Card>
             <CardHeader>
               <CardTitle>Recent Sales</CardTitle>
               <CardDescription>Your 5 most recent sales transactions.</CardDescription>
@@ -208,8 +187,7 @@ export default function DashboardPage() {
                 </TableBody>
               </Table>
             </CardContent>
-          </Card>
-        </div>
+        </Card>
       </main>
     </div>
   );
