@@ -21,6 +21,7 @@ import {
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/firebase';
 import Link from 'next/link';
+import { Logo } from '@/components/logo';
 
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -37,11 +38,9 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="offcanvas">
       <SidebarHeader>
-        <div className="flex items-center gap-2">
-          <h1 className="text-xl font-semibold text-sidebar-foreground">
-            Sateri Medical
-          </h1>
-        </div>
+        <Link href="/dashboard" className="flex items-center justify-center">
+          <Logo className="w-32 h-auto" />
+        </Link>
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>

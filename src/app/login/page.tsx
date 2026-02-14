@@ -18,6 +18,7 @@ import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { FirebaseError } from 'firebase/app';
 import { useAdmin } from '@/hooks/use-admin';
+import { Logo } from '@/components/logo';
 
 export default function LoginPage() {
   const [loginEmail, setLoginEmail] = useState('');
@@ -109,7 +110,9 @@ export default function LoginPage() {
           </Button>
        </div>
       <div className="w-full max-w-md">
-        <h1 className="text-4xl font-semibold text-center mb-6">Sateri Medical</h1>
+        <div className="flex justify-center mb-8">
+          <Logo className="w-56 h-auto" />
+        </div>
         <Card>
           <CardHeader>
             <CardTitle>Login</CardTitle>
